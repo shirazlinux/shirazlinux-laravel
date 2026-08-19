@@ -37,7 +37,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="https://umami.sudoshz.ir">
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('css/site.css') }}?v=20260819social">
+    <link rel="stylesheet" href="{{ asset('css/site.css') }}?v=20260819social2">
     <style>
       .logo img{height:48px!important;width:auto!important;max-width:140px!important;max-height:48px!important;object-fit:contain;filter:brightness(0)}
       html[data-theme="dark"] .logo img{filter:brightness(0) invert(1)}
@@ -146,18 +146,23 @@
             </p>
         </div>
         <div>
-            <strong>شبکه‌ها</strong>
-            @php $socialLinks = \App\Support\Settings::socialLinks(); @endphp
-            @if($socialLinks)
-                <p class="footer-social">
-                    @foreach($socialLinks as $link)
-                        <a href="{{ $link['url'] }}" target="_blank" rel="me noopener">{{ $link['label'] }}</a>
-                    @endforeach
-                </p>
-            @endif
+            <strong>سایت</strong>
+            <p class="muted"><a href="{{ setting('social_website', 'https://sudoshz.ir') }}" target="_blank" rel="noopener">{{ parse_url(setting('social_website', 'https://sudoshz.ir'), PHP_URL_HOST) ?: 'sudoshz.ir' }}</a></p>
             <p class="muted" style="margin-top:.4rem"><a href="{{ route('sitemap') }}">نقشه سایت</a> · <a href="{{ route('feed') }}">RSS</a></p>
         </div>
     </div>
+    @php $socialLinks = collect(\App\Support\Settings::socialLinks())->reject(fn ($l) => ($l['key'] ?? '') === 'social_website')->values(); @endphp
+    @if($socialLinks->isNotEmpty())
+        <nav class="container footer-social-bar" aria-label="شبکه‌های اجتماعی">
+            @foreach($socialLinks as $link)
+                <a class="footer-social-btn" href="{{ $link['url'] }}" target="_blank" rel="me noopener"
+                   title="{{ $link['label'] }}" aria-label="{{ $link['label'] }}">
+                    @include('site.partials.social-icon', ['key' => $link['key']])
+                    <span>{{ $link['label'] }}</span>
+                </a>
+            @endforeach
+        </nav>
+    @endif
     <div class="container footer-seals" aria-label="نشان‌ها و حامیان">
         <a class="footer-seal" href="https://shirazweb.net/?ref=sudoshz.ir" target="_blank" rel="noopener noreferrer" title="شیرازوب — حامی">
             <img src="https://sudoshz.ir/media/posts/130/shirazweb-logo-transparent-background.png"
