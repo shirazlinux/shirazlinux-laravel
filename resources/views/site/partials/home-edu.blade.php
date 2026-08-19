@@ -66,7 +66,7 @@
 
     <div class="edu-more-row">
         <a class="btn-brand" href="{{ url('/what-is-free-software') }}">بیشتر بخوان</a>
-        <a class="btn-outline" href="{{ url('/fsf-history-redirect') }}">تاریخچه</a>
+        <a class="btn-outline" href="{{ url('/free-software-history/') }}">تاریخچه</a>
         <a class="btn-outline" href="{{ route('tags.show', 'videos') }}">ویدیوها</a>
     </div>
 </section>

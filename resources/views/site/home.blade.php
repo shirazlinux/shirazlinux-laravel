@@ -78,7 +78,7 @@
         <section class="content-section section-history" aria-labelledby="history-heading">
             <div class="section-head">
                 <h2 class="section-title" id="history-heading">تاریخچه نرم‌افزار آزاد</h2>
-                <a class="section-more" href="{{ url('/fsf-history-redirect') }}">همه</a>
+                <a class="section-more" href="{{ url('/free-software-history/') }}">همه</a>
             </div>
             <p class="muted section-lead home-desktop-only">
                 از شروع پروژه گنو تا مجوزها و بنیاد نرم‌افزار آزاد — چند مطلب کوتاه برای شناخت مسیر این جنبش.

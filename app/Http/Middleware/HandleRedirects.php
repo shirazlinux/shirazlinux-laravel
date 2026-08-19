@@ -86,11 +86,12 @@ class HandleRedirects
             '/sitemap.html' => '/sitemap.xml',
             '/search.html' => '/search',
             // common Publii aliases
-            '/fsf-history-redirect/' => '/fsf-history-redirect',
+            '/fsf-history-redirect' => '/free-software-history/',
+            '/fsf-history-redirect/' => '/free-software-history/',
+            '/free-software-history' => '/free-software-history/',
             '/gnulinux-conf/' => '/gnulinux-conf',
             // Separated projects → own docroot / subdomain
             '/ada-zangeman' => '/ada/',
-            '/free-software-history' => 'https://free.sudoshz.ir/',
             '/deltachat-list' => 'https://delta.sudoshz.ir/',
         ];
 
@@ -106,9 +107,6 @@ class HandleRedirects
         }
         if (str_starts_with($path, '/deltachat-list/')) {
             return 'https://delta.sudoshz.ir/'.ltrim(substr($path, strlen('/deltachat-list/')), '/');
-        }
-        if (str_starts_with($path, '/free-software-history/')) {
-            return 'https://free.sudoshz.ir/';
         }
 
         return null;
