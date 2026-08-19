@@ -66,12 +66,15 @@ class SettingsController extends Controller
                 'comments_enabled' => $request->boolean('comments_enabled'),
             ],
             'social' => $request->validate([
+                'social_website' => 'nullable|string|max:255',
                 'social_telegram' => 'nullable|string|max:255',
                 'social_mastodon' => 'nullable|string|max:255',
                 'social_matrix' => 'nullable|string|max:255',
                 'social_codeberg' => 'nullable|string|max:255',
+                'social_github' => 'nullable|string|max:255',
                 'social_youtube' => 'nullable|string|max:255',
-                'social_website' => 'nullable|string|max:255',
+                'social_instagram' => 'nullable|string|max:255',
+                'social_x' => 'nullable|string|max:255',
             ]),
             'integrations' => $request->validate([
                 'umami_website_id' => 'nullable|string|max:80',

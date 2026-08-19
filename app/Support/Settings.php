@@ -27,7 +27,7 @@ class Settings
             'seo_default_description' => 'شیرازلینوکس؛ جامعه نرم‌افزار آزاد شیراز — نشست، آموزش و ترویج آزادی کاربران.',
             'seo_og_image' => 'media/slider/slide1.jpg',
             'seo_robots' => 'index,follow',
-            'seo_twitter' => '',
+            'seo_twitter' => 'shirazlinux',
             'seo_canonical_base' => 'https://sudoshz.ir',
             'seo_keywords' => 'شیرازلینوکس, نرم‌افزار آزاد, لینوکس, شیراز, FOSS, جامعه نرم‌افزار آزاد, گنو/لینوکس',
             'seo_google_verification' => '',
@@ -56,11 +56,14 @@ class Settings
             'home_slider' => [], // filled by defaultSlides() when empty
 
             // Social
-            'social_telegram' => '',
-            'social_mastodon' => '',
-            'social_matrix' => '',
-            'social_codeberg' => '',
-            'social_youtube' => '',
+            'social_telegram' => 'https://t.me/sudoshz',
+            'social_mastodon' => 'https://mastodon.social/@Shirazlinux',
+            'social_matrix' => 'https://matrix.to/#/%23shirazlinux:matrix.org',
+            'social_codeberg' => 'https://codeberg.org/shirazlinux',
+            'social_github' => 'https://github.com/shirazlinux',
+            'social_youtube' => 'https://www.youtube.com/@shirazlinux',
+            'social_instagram' => 'https://www.instagram.com/shirazlinux',
+            'social_x' => 'https://x.com/shirazlinux',
             'social_website' => 'https://sudoshz.ir',
 
             // Integrations (non-secret)
@@ -177,6 +180,48 @@ class Settings
                 'enabled' => true,
             ],
         ];
+    }
+
+    /**
+     * Filled social profiles for footer / JSON-LD.
+     *
+     * @return list<array{key:string,label:string,url:string}>
+     */
+    public static function socialLinks(): array
+    {
+        $catalog = [
+            'social_telegram' => 'تلگرام',
+            'social_mastodon' => 'ماس‌تودون',
+            'social_matrix' => 'ماتریکس',
+            'social_youtube' => 'یوتیوب',
+            'social_codeberg' => 'Codeberg',
+            'social_github' => 'GitHub',
+            'social_instagram' => 'اینستاگرام',
+            'social_x' => 'اکس / توییتر',
+            'social_website' => 'وب‌سایت',
+        ];
+        $out = [];
+        foreach ($catalog as $key => $label) {
+            $url = trim((string) self::get($key, ''));
+            if ($url === '') {
+                continue;
+            }
+            if ($key === 'social_telegram' && ! str_starts_with($url, 'http')) {
+                $url = 'https://t.me/'.ltrim($url, '@');
+            }
+            if ($key === 'social_youtube' && ! str_starts_with($url, 'http')) {
+                $url = 'https://www.youtube.com/'.ltrim($url, '@/');
+            }
+            if ($key === 'social_x' && ! str_starts_with($url, 'http')) {
+                $url = 'https://x.com/'.ltrim($url, '@');
+            }
+            if ($key === 'social_instagram' && ! str_starts_with($url, 'http')) {
+                $url = 'https://www.instagram.com/'.ltrim($url, '@/');
+            }
+            $out[] = ['key' => $key, 'label' => $label, 'url' => $url];
+        }
+
+        return $out;
     }
 
     public static function set(string $key, mixed $value): void

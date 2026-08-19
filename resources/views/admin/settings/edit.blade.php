@@ -190,14 +190,18 @@
 
     @if($tab === 'social')
       <h2 class="settings-section-title">شبکه‌ها و پیوندها</h2>
+      <p class="settings-help">فقط فیلدهای پر در فوتر سایت و JSON-LD نشان داده می‌شوند. خالی بگذارید تا مخفی شود.</p>
       <div class="settings-grid">
         @foreach([
           'social_website' => 'وب‌سایت اصلی',
           'social_telegram' => 'تلگرام',
           'social_mastodon' => 'ماس‌تودون',
           'social_matrix' => 'ماتریکس',
-          'social_codeberg' => 'Codeberg / گیت',
-          'social_youtube' => 'یوتیوب / ویدیو',
+          'social_youtube' => 'یوتیوب',
+          'social_codeberg' => 'Codeberg',
+          'social_github' => 'GitHub',
+          'social_instagram' => 'اینستاگرام',
+          'social_x' => 'اکس / توییتر',
         ] as $key => $label)
           <div class="settings-field">
             <label>{{ $label }}</label>

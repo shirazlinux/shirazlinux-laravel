@@ -236,6 +236,32 @@ try {
         }
         echo "home copy refreshed\n";
 
+        $socials = [
+            'social_telegram' => 'https://t.me/sudoshz',
+            'social_mastodon' => 'https://mastodon.social/@Shirazlinux',
+            'social_matrix' => 'https://matrix.to/#/%23shirazlinux:matrix.org',
+            'social_codeberg' => 'https://codeberg.org/shirazlinux',
+            'social_github' => 'https://github.com/shirazlinux',
+            'social_youtube' => 'https://www.youtube.com/@shirazlinux',
+            'social_instagram' => 'https://www.instagram.com/shirazlinux',
+            'social_x' => 'https://x.com/shirazlinux',
+            'social_website' => 'https://sudoshz.ir',
+            'seo_twitter' => 'shirazlinux',
+        ];
+        $get = $pdo->prepare('SELECT value FROM site_settings WHERE key=?');
+        $ins = $pdo->prepare('INSERT INTO site_settings (key,value,created_at,updated_at) VALUES (?,?,?,?)
+            ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at');
+        foreach ($socials as $k=>$v) {
+            $get->execute([$k]);
+            $cur = $get->fetchColumn();
+            $decoded = is_string($cur) ? json_decode($cur, true) : null;
+            $empty = $cur === false || $cur === '' || $decoded === '' || $decoded === null;
+            if ($empty) {
+                $ins->execute([$k, json_encode($v, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), $now, $now]);
+            }
+        }
+        echo "socials filled\n";
+
     }
 } catch (Throwable $e) {
     echo "schema skip: ".$e->getMessage()."\n";

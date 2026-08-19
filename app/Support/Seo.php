@@ -108,7 +108,8 @@ class Seo
     {
         $keys = [
             'social_telegram', 'social_mastodon', 'social_matrix',
-            'social_codeberg', 'social_youtube', 'social_website',
+            'social_codeberg', 'social_github', 'social_youtube',
+            'social_instagram', 'social_x', 'social_website',
         ];
         $out = [];
         foreach ($keys as $k) {
@@ -121,6 +122,15 @@ class Seo
             }
             if ($k === 'social_youtube' && ! str_starts_with($v, 'http')) {
                 $v = 'https://www.youtube.com/'.ltrim($v, '@/');
+            }
+            if ($k === 'social_x' && ! str_starts_with($v, 'http')) {
+                $v = 'https://x.com/'.ltrim($v, '@');
+            }
+            if ($k === 'social_instagram' && ! str_starts_with($v, 'http')) {
+                $v = 'https://www.instagram.com/'.ltrim($v, '@/');
+            }
+            if ($k === 'social_github' && ! str_starts_with($v, 'http')) {
+                $v = 'https://github.com/'.ltrim($v, '@/');
             }
             $out[] = $v;
         }
