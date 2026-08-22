@@ -218,10 +218,31 @@ class Settings
             if ($key === 'social_instagram' && ! str_starts_with($url, 'http')) {
                 $url = 'https://www.instagram.com/'.ltrim($url, '@/');
             }
-            $out[] = ['key' => $key, 'label' => $label, 'url' => $url];
+            $out[] = [
+                'key' => $key,
+                'label' => $label,
+                'url' => $url,
+                'libre' => in_array($key, ['social_mastodon', 'social_matrix', 'social_codeberg'], true),
+            ];
         }
 
         return $out;
+    }
+
+    /**
+     * Footer only: free-software networks (not GitHub / Instagram / YouTube / X).
+     * Telegram stays as the community channel.
+     *
+     * @return list<array{key:string,label:string,url:string,libre:bool}>
+     */
+    public static function footerSocialLinks(): array
+    {
+        $skip = ['social_website', 'social_github', 'social_instagram', 'social_youtube', 'social_x'];
+
+        return array_values(array_filter(
+            self::socialLinks(),
+            fn (array $link) => ! in_array($link['key'], $skip, true)
+        ));
     }
 
     public static function set(string $key, mixed $value): void

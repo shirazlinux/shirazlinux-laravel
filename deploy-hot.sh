@@ -115,11 +115,21 @@ if ($ht === '' || strpos($ht, 'Laravel on apex') === false) {
     // Minimal safe fallback (full apex htaccess comes from cutover)
     $laravelHt = is_file($base.'/public/.htaccess') ? file_get_contents($base.'/public/.htaccess') : '';
     $ht = "<IfModule mime_module>\n  AddHandler application/x-httpd-ea-php84 .php .php8 .phtml\n</IfModule>\n".$laravelHt;
-    file_put_contents($htPath, $ht);
-    echo "htaccess php84 fallback set\n";
-} else {
-    echo "htaccess apex preserved\n";
 }
+// cPanel MultiPHP rewrites a php82 handler at the file END; last AddHandler wins.
+$ht = str_replace('application/x-httpd-ea-php82', 'application/x-httpd-ea-php84', $ht);
+$ht = str_replace('“ea-php82”', '“ea-php84”', $ht);
+$force = "# FORCE PHP 8.4 (must stay AFTER cPanel handler — last AddHandler wins)\n"
+    ."<IfModule mime_module>\n"
+    ."  AddHandler application/x-httpd-ea-php84 .php .php8 .phtml\n"
+    ."</IfModule>\n";
+if (strpos($ht, 'FORCE PHP 8.4') === false) {
+    $ht = rtrim($ht)."\n\n".$force;
+} else {
+    $ht = preg_replace('/# FORCE PHP 8\.4[\s\S]*?<\/IfModule>\n?/m', $force, $ht, 1);
+}
+file_put_contents($htPath, $ht);
+echo "htaccess php84 forced after cPanel handler\n";
 
 $env = $base.'/.env';
 if (is_file($env)) {
