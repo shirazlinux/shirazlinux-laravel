@@ -1,5 +1,9 @@
 <?php
 
+if (PHP_VERSION_ID < 80400) {
+    require __DIR__.'/php84-guard.php';
+}
+
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 

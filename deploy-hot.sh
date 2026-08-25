@@ -11,7 +11,7 @@ rm -f "$ZIP" "$PHP"
 
 zip -rq "$ZIP" \
   app bootstrap/app.php bootstrap/providers.php config routes \
-  resources/views public/css public/js public/media/icons public/media/projects public/robots.txt public/.htaccess public/index.php \
+  resources/views public/css public/js public/media/icons public/media/projects public/robots.txt public/.htaccess public/index.php public/php84-guard.php \
   composer.json composer.lock README-MIGRATION.md
 
 cat > "$PHP" <<'PHP'
@@ -89,6 +89,10 @@ foreach (['icons','projects','website'] as $mediaDir) {
 $idx = <<<'IDX'
 <?php
 
+if (PHP_VERSION_ID < 80400) {
+    require __DIR__.'/php84-guard.php';
+}
+
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 
@@ -107,6 +111,10 @@ $app->handleRequest(Request::capture());
 IDX;
 file_put_contents($web.'/index.php', $idx);
 echo "index rewritten\n";
+if (is_file($base.'/public/php84-guard.php')) {
+    copy($base.'/public/php84-guard.php', $web.'/php84-guard.php');
+    echo "php84-guard synced\n";
+}
 
 // Keep PHP 8.4 + front controller rules if .htaccess already has our apex markers
 $htPath = $web.'/.htaccess';
@@ -123,11 +131,8 @@ $force = "# FORCE PHP 8.4 (must stay AFTER cPanel handler — last AddHandler wi
     ."<IfModule mime_module>\n"
     ."  AddHandler application/x-httpd-ea-php84 .php .php8 .phtml\n"
     ."</IfModule>\n";
-if (strpos($ht, 'FORCE PHP 8.4') === false) {
-    $ht = rtrim($ht)."\n\n".$force;
-} else {
-    $ht = preg_replace('/# FORCE PHP 8\.4[\s\S]*?<\/IfModule>\n?/m', $force, $ht, 1);
-}
+$ht = preg_replace('/\n*# FORCE PHP 8\.4[\s\S]*?<\/IfModule>\s*/m', "\n", $ht) ?? $ht;
+$ht = rtrim($ht)."\n\n".$force;
 file_put_contents($htPath, $ht);
 echo "htaccess php84 forced after cPanel handler\n";
 
