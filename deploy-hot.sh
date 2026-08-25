@@ -11,7 +11,7 @@ rm -f "$ZIP" "$PHP"
 
 zip -rq "$ZIP" \
   app bootstrap/app.php bootstrap/providers.php config routes \
-  resources/views public/css public/js public/media/icons public/media/projects public/robots.txt public/.htaccess public/index.php public/php84-guard.php \
+  resources/views public/css public/js public/media/icons public/media/projects public/robots.txt public/.htaccess public/index.php public/index.php84 public/php84-guard.php \
   composer.json composer.lock README-MIGRATION.md
 
 cat > "$PHP" <<'PHP'
@@ -85,13 +85,9 @@ foreach (['icons','projects','website'] as $mediaDir) {
     }
 }
 
-// Apex front controller → ../laravel-shiraz
-$idx = <<<'IDX'
+// Apex front controller on .php84 so cPanel MultiPHP (.php → ea-php82) cannot take it down.
+$idx84 = <<<'IDX84'
 <?php
-
-if (PHP_VERSION_ID < 80400) {
-    require __DIR__.'/php84-guard.php';
-}
 
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
@@ -108,9 +104,25 @@ require __DIR__.'/../laravel-shiraz/vendor/autoload.php';
 $app = require_once __DIR__.'/../laravel-shiraz/bootstrap/app.php';
 
 $app->handleRequest(Request::capture());
-IDX;
-file_put_contents($web.'/index.php', $idx);
-echo "index rewritten\n";
+IDX84;
+file_put_contents($web.'/index.php84', $idx84);
+echo "index.php84 written\n";
+
+$idxStub = <<<'IDXSTUB'
+<?php
+// cPanel MultiPHP only controls .php — this stub must not load Composer on 8.2.
+if (PHP_VERSION_ID >= 80400 && is_file(__DIR__.'/index.php84')) {
+    require __DIR__.'/index.php84';
+    exit;
+}
+if (is_file(__DIR__.'/php84-guard.php')) {
+    require __DIR__.'/php84-guard.php';
+}
+http_response_code(302);
+header('Location: /');
+IDXSTUB;
+file_put_contents($web.'/index.php', $idxStub);
+echo "index.php stub written\n";
 if (is_file($base.'/public/php84-guard.php')) {
     copy($base.'/public/php84-guard.php', $web.'/php84-guard.php');
     echo "php84-guard synced\n";
@@ -132,9 +144,27 @@ $force = "# FORCE PHP 8.4 (must stay AFTER cPanel handler — last AddHandler wi
     ."  AddHandler application/x-httpd-ea-php84 .php .php8 .phtml\n"
     ."</IfModule>\n";
 $ht = preg_replace('/\n*# FORCE PHP 8\.4[\s\S]*?<\/IfModule>\s*/m', "\n", $ht) ?? $ht;
+if (! preg_match('/AddHandler application\/x-httpd-ea-php84 \.php84/', $ht)) {
+    $ht = "# Laravel .php84 is immune to MultiPHP (.php) rewrites\n"
+        ."<IfModule mime_module>\n"
+        ."  AddHandler application/x-httpd-ea-php84 .php84\n"
+        ."</IfModule>\n"
+        ."<FilesMatch \"\\.php84$\">\n"
+        ."  SetHandler application/x-httpd-ea-php84\n"
+        ."</FilesMatch>\n"
+        ."DirectoryIndex index.php84 index.php\n\n".$ht;
+}
+$ht = str_replace('RewriteRule ^ index.php [L]', 'RewriteRule ^ index.php84 [L]', $ht);
+if (strpos($ht, 'RewriteRule ^ index.php84 [L]') === false && strpos($ht, 'Front controller') !== false) {
+    $ht = preg_replace(
+        '/# Front controller\nRewriteCond %\{REQUEST_FILENAME\} !-d\nRewriteCond %\{REQUEST_FILENAME\} !-f\nRewriteRule \^ index\.php \[L\]/',
+        "# Front controller (index.php84 = ea-php84, ignored by MultiPHP)\nRewriteCond %{REQUEST_FILENAME} !-d\nRewriteCond %{REQUEST_FILENAME} !-f\nRewriteRule ^ index.php84 [L]",
+        $ht
+    );
+}
 $ht = rtrim($ht)."\n\n".$force;
 file_put_contents($htPath, $ht);
-echo "htaccess php84 forced after cPanel handler\n";
+echo "htaccess php84 + index.php84 front controller\n";
 
 $env = $base.'/.env';
 if (is_file($env)) {
