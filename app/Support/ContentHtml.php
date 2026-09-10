@@ -259,6 +259,7 @@ class ContentHtml
         $alt = preg_replace('/\s*—\s*[0-9A-Fa-f]{8}.*/u', '', $alt) ?? $alt;
         $alt = preg_replace('/\s*—\s*pro\s+\d.*/iu', '', $alt) ?? $alt;
         $alt = preg_replace('/\s*—\s*photo[_\s]?\d+.*/iu', '', $alt) ?? $alt;
+        $alt = preg_replace('/\s*—\s*(?:#?DOMAIN.*|social image.*)$/iu', '', $alt) ?? $alt;
         $alt = preg_replace('/\s*\(تصویر[^)]*\)/u', '', $alt) ?? $alt;
         $alt = str_replace(['#DOMAIN_NAME#', '#DOMAIN NAME#'], '', $alt);
         $alt = preg_replace('/\s+/u', ' ', $alt) ?? $alt;
