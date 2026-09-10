@@ -64,7 +64,7 @@
                                 <div class="search-hit-media">
                                     <a href="{{ $url }}">
                                         @if($post->featured_image)
-                                            <img src="{{ asset(ltrim($post->featured_image, '/')) }}" alt="" loading="lazy"
+                                            <img src="{{ asset(ltrim($post->featured_image, '/')) }}" alt="{{ $post->title }}" loading="lazy"
                                                  onerror="this.style.display='none'">
                                         @else
                                             <span class="search-hit-placeholder">{{ $post->type === 'page' ? 'صفحه' : 'مطلب' }}</span>

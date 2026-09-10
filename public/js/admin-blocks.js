@@ -215,7 +215,7 @@
         case 'image':
           if (!b.src) return '';
           var cap = (b.caption || '').trim();
-          var img = '<img src="' + escapeHtml(b.src) + '" alt="' + escapeHtml(b.alt || '') + '" loading="lazy">';
+          var img = '<img src="' + escapeHtml(b.src) + '" alt="' + escapeHtml(b.alt || b.caption || 'تصویر مطلب') + '" loading="lazy">';
           return cap
             ? '<figure class="post-image">' + img + '<figcaption>' + escapeHtml(cap) + '</figcaption></figure>'
             : '<p class="align-center">' + img + '</p>';

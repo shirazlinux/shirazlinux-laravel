@@ -13,7 +13,7 @@ class ContentHtml
     /** @var array<int, string|null>|null */
     private static ?array $publiiSlugMap = null;
 
-    public static function prepare(?string $html): string
+    public static function prepare(?string $html, ?string $fallbackAlt = null): string
     {
         $html = trim((string) $html);
         if ($html === '') {
@@ -25,7 +25,7 @@ class ContentHtml
         $html = self::stripEditorNoise($html);
         $html = self::sanitizeTableInlineStyles($html);
         $html = self::normalizeTables($html);
-        $html = self::enhanceImages($html);
+        $html = self::enhanceImages($html, $fallbackAlt);
         $html = self::fixOrphanLists($html);
         $html = self::normalizeWhitespace($html);
 
@@ -202,17 +202,29 @@ class ContentHtml
     }
 
     /**
-     * Ensure images have alt, loading, and decoding attributes for SEO/a11y.
+     * Ensure images have meaningful alt, plus loading/decoding for SEO/a11y.
      */
-    private static function enhanceImages(string $html): string
+    private static function enhanceImages(string $html, ?string $fallbackAlt = null): string
     {
         return preg_replace_callback(
             '/<img\b([^>]*?)>/iu',
-            function (array $m) {
+            function (array $m) use ($fallbackAlt) {
                 $attrs = $m[1];
+                $alt = '';
+                if (preg_match('/\balt\s*=\s*(["\'])(.*?)\1/is', $attrs, $am)) {
+                    $alt = html_entity_decode($am[2], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                }
+                $clean = self::cleanImageAlt($alt, $fallbackAlt);
 
-                if (! preg_match('/\balt\s*=/i', $attrs)) {
-                    $attrs .= ' alt=""';
+                if (preg_match('/\balt\s*=/i', $attrs)) {
+                    $attrs = preg_replace(
+                        '/\balt\s*=\s*(["\']).*?\1/is',
+                        ' alt="'.htmlspecialchars($clean, ENT_QUOTES | ENT_HTML5, 'UTF-8').'"',
+                        $attrs,
+                        1
+                    ) ?? $attrs;
+                } else {
+                    $attrs .= ' alt="'.htmlspecialchars($clean, ENT_QUOTES | ENT_HTML5, 'UTF-8').'"';
                 }
 
                 if (! preg_match('/\bloading\s*=/i', $attrs)) {
@@ -223,11 +235,48 @@ class ContentHtml
                     $attrs .= ' decoding="async"';
                 }
 
-                // Prefer width/height preservation if already present; no forced sizes
                 return '<img'.$attrs.'>';
             },
             $html
         ) ?? $html;
+    }
+
+    public static function cleanImageAlt(string $alt, ?string $fallback = null): string
+    {
+        $alt = html_entity_decode(trim($alt), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $alt = strtr($alt, [
+            'جسین سیلانی' => 'حسین سیلانی',
+            'دانبال بهزادی' => 'دانیال بهزادی',
+            'نشست دووم' => 'نشست دوم',
+            'شیرازلینوس' => 'شیرازلینوکس',
+            'محمدد حسن' => 'محمدحسن',
+            'متن بار' => 'متن‌باز',
+            'دسته جمعی' => 'دسته‌جمعی',
+            'LibreMobille' => 'LibreMobile',
+            'LIbreMobile' => 'LibreMobile',
+            'فهمیه اشرفی' => 'فهیمه اشرفی',
+        ]);
+        $alt = preg_replace('/\s*—\s*[0-9A-Fa-f]{8}.*/u', '', $alt) ?? $alt;
+        $alt = preg_replace('/\s*—\s*pro\s+\d.*/iu', '', $alt) ?? $alt;
+        $alt = preg_replace('/\s*—\s*photo[_\s]?\d+.*/iu', '', $alt) ?? $alt;
+        $alt = preg_replace('/\s*\(تصویر[^)]*\)/u', '', $alt) ?? $alt;
+        $alt = str_replace(['#DOMAIN_NAME#', '#DOMAIN NAME#'], '', $alt);
+        $alt = preg_replace('/\s+/u', ' ', $alt) ?? $alt;
+        $alt = trim($alt, " \t-–—");
+
+        $weak = $alt === ''
+            || preg_match('/[0-9A-Fa-f]{8}[- ][0-9A-Fa-f]{4}/', $alt)
+            || preg_match('/thumbnail/i', $alt)
+            || preg_match('/^photo_\d{4}-\d{2}-\d{2}/i', $alt)
+            || preg_match('/^freesoftware$/i', $alt);
+
+        if ($weak) {
+            $fb = trim((string) $fallback);
+
+            return $fb !== '' ? $fb : 'تصویر مطلب شیرازلینوکس';
+        }
+
+        return $alt;
     }
 
     private static function rewriteMediaUrls(string $html): string

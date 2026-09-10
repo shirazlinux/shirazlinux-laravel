@@ -16,7 +16,7 @@
     <div class="slider" id="home-slider" data-interval="4000">
         @foreach($slides as $i => $slide)
             <div class="slide{{ $i === 0 ? ' is-active' : '' }}" data-index="{{ $i }}">
-                <img src="{{ $slide['image'] }}" alt="{{ $slide['alt'] }}" @if($i === 0) fetchpriority="high" @else loading="lazy" @endif>
+                <img src="{{ $slide['image'] }}" alt="{{ $slide['alt'] ?: ($slide['title'] ?: 'تصویر اسلاید شیرازلینوکس') }}" @if($i === 0) fetchpriority="high" @else loading="lazy" @endif>
                 <div class="slide-overlay">
                     <div class="slide-caption">
                         <span class="slide-kicker">{{ setting('site_name', 'شیرازلینوکس') }}</span>
@@ -109,9 +109,9 @@
                 @endphp
                 <a class="project-card home-scroll-item" href="{{ $project['url'] }}"
                    @if($isExternal) target="_blank" rel="noopener" @endif>
-                    <span class="project-media" aria-hidden="true">
+                    <span class="project-media">
                         @if(!empty($project['image']))
-                            <img src="{{ $project['image'] }}" alt="" loading="lazy" decoding="async"
+                            <img src="{{ $project['image'] }}" alt="{{ $project['name'] }} — {{ $project['desc'] }}" loading="lazy" decoding="async"
                                  width="400" height="250">
                         @else
                             <span class="project-emoji project-emoji--fallback">{{ $project['emoji'] ?? '🚀' }}</span>

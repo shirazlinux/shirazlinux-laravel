@@ -49,7 +49,7 @@
                      onerror="this.style.display='none'">
             </figure>
         @endif
-        <div class="article-body prose">{!! \App\Support\ContentHtml::prepare($post->body) !!}</div>
+        <div class="article-body prose">{!! \App\Support\ContentHtml::prepare($post->body, $post->title) !!}</div>
     </article>
 
     @if(setting('comments_enabled', true))

@@ -101,7 +101,7 @@
                      onerror="this.style.display='none'">
             </figure>
         @endif
-        <div class="article-body prose" itemprop="articleBody">{!! \App\Support\ContentHtml::prepare($post->body) !!}</div>
+        <div class="article-body prose" itemprop="articleBody">{!! \App\Support\ContentHtml::prepare($post->body, $post->title) !!}</div>
         <div style="margin-top:1.25rem" aria-label="برچسب‌ها">
             @foreach($post->tags as $tag)
                 <a class="badge" rel="tag" href="{{ route('tags.show', $tag->slug) }}">{{ $tag->name }}</a>

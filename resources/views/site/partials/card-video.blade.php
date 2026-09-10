@@ -7,7 +7,7 @@
             <img src="{{ asset(ltrim($post->featured_image, '/')) }}" alt="{{ $post->title }}" loading="lazy"
                  onerror="this.src='{{ asset('media/website/logo.png') }}';this.style.objectFit='contain';this.style.background='#1c1917';this.style.padding='1rem'">
         @else
-            <img src="{{ asset('media/website/logo.png') }}" alt="" loading="lazy" style="object-fit:contain;background:#1c1917;padding:1.25rem">
+            <img src="{{ asset('media/website/logo.png') }}" alt="{{ $post->title }}" loading="lazy" style="object-fit:contain;background:#1c1917;padding:1.25rem">
         @endif
         <span class="video-play" aria-hidden="true">
             <svg viewBox="0 0 48 48" width="44" height="44">

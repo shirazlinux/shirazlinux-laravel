@@ -179,7 +179,7 @@ class HomeController extends Controller
                 return [
                     'image' => str_starts_with($img, 'http') ? $img : asset(ltrim($img, '/')),
                     'title' => (string) ($s['title'] ?? ''),
-                    'alt' => (string) ($s['alt'] ?? $s['title'] ?? ''),
+                    'alt' => (string) ($s['alt'] ?: ($s['title'] ?? '') ?: 'تصویر اسلاید شیرازلینوکس'),
                     'url' => $url,
                 ];
             })
