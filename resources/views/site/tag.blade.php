@@ -34,6 +34,7 @@
 @section('content')
 @php
     $isEvent = $tag->isEventLike();
+    $isPoster = $tag->isPosterLike();
     $isGuide = $tag->isGuideLike();
     $cover = $tag->featuredImagePath();
     $kicker = $isEvent
@@ -49,7 +50,7 @@
         ['name' => $tag->name, 'url' => route('tags.show', $tag->slug)],
     ];
 @endphp
-<div class="container tag-page {{ $isEvent ? 'tag-page--event' : '' }} {{ $isGuide ? 'tag-page--guide' : '' }}">
+<div class="container tag-page {{ $isEvent ? 'tag-page--event' : '' }} {{ $isPoster ? 'tag-page--poster' : '' }} {{ $isGuide ? 'tag-page--guide' : '' }}">
     @include('site.partials.breadcrumbs', ['items' => $tagCrumbsUi])
 
     <header class="section-hero {{ $cover ? 'has-cover' : '' }} {{ $isEvent ? 'section-hero--event' : '' }} {{ $isGuide ? 'section-hero--guide' : '' }}">
@@ -78,11 +79,11 @@
         <span class="muted">{{ $posts->total() }} مورد</span>
     </div>
 
-    <div class="grid {{ $isEvent ? 'cards-event' : ($isGuide ? 'cards-guide' : 'cards-3') }}">
+    <div class="grid {{ ($isEvent || $isPoster) ? 'cards-event' : ($isGuide ? 'cards-guide' : 'cards-3') }}">
         @forelse($posts as $post)
             @include('site.partials.card', [
                 'post' => $post,
-                'imageAspect' => $isEvent ? '1/1' : ($isGuide ? '16/9' : null),
+                'imageAspect' => ($isEvent || $isPoster) ? '1/1' : ($isGuide ? '16/9' : null),
             ])
         @empty
             <p class="empty-state">هنوز مطلبی در این برچسب نیست.</p>

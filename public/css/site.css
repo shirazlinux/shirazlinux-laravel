@@ -652,7 +652,9 @@ html[data-theme="dark"] .home-sitelink:hover{
 
 .tag-page--event .section-title{color:var(--brand-dark)}
 .tag-page--event .cards-event .card{border-radius:12px}
-.tag-page--event .cards-event .card-media{border-radius:12px 12px 0 0}
+.tag-page--event .cards-event .card-media,
+.tag-page--poster .cards-event .card-media{border-radius:12px 12px 0 0}
+.tag-page--poster .cards-event .card{border-radius:12px}
 .empty-state{color:var(--muted);padding:1rem 0}
 
 @media (max-width:800px){
