@@ -48,7 +48,7 @@
       <div class="editor-wrap" data-block-editor>
         <div class="editor-label-row">
           <label for="post-body">متن</label>
-          <span class="editor-hint">بلاک‌به‌بلاک — مثل ویرگول</span>
+          <span class="editor-hint">بلاک «فهرست مطالب» عناوین را اول مطلب لینک می‌کند</span>
         </div>
         <textarea id="post-body" name="body">{{ old('body',$post->body) }}</textarea>
       </div>
@@ -172,11 +172,12 @@
           <label for="tag-picker-filter">تگ‌ها</label>
           <span class="tag-picker-count" data-tag-count></span>
         </div>
-        <input type="search" id="tag-picker-filter" class="tag-picker-filter" placeholder="جستجو…" autocomplete="off" data-tag-filter>
+        <input type="search" id="tag-picker-filter" class="tag-picker-filter" placeholder="جستجوی نام یا اسلاگ…" autocomplete="off" data-tag-filter>
+        <div class="tag-picker-selected" data-tag-selected hidden></div>
         <div class="tag-picker-list" role="group" aria-label="انتخاب تگ‌ها">
           @foreach($tags as $tag)
             @php $checked = in_array($tag->id, old('tags', $selectedTags)); @endphp
-            <label class="tag-chip{{ $checked ? ' is-on' : '' }}" data-tag-name="{{ $tag->name }}">
+            <label class="tag-chip{{ $checked ? ' is-on' : '' }}" data-tag-name="{{ $tag->name }}" data-tag-slug="{{ $tag->slug }}">
               <input type="checkbox" name="tags[]" value="{{ $tag->id }}" @checked($checked)>
               <span class="tag-chip-dot" aria-hidden="true"></span>
               <span class="tag-chip-text">{{ $tag->name }}</span>
@@ -260,7 +261,7 @@
     assetBase: @json(rtrim(url('/'), '/') . '/')
   };
 </script>
-<script src="{{ asset('js/admin-blocks.js') }}?v=20260818j" defer></script>
+<script src="{{ asset('js/admin-blocks.js') }}?v=20260825toc" defer></script>
 <script src="{{ asset('js/admin-media.js') }}?v=20260818j" defer></script>
 <script>
 (function () {
@@ -283,13 +284,21 @@
         updateCount();
       }
       inp.addEventListener('change', sync);
+      chip.addEventListener('click', function (e) {
+        if (e.target === inp) return;
+        e.preventDefault();
+        inp.checked = !inp.checked;
+        inp.dispatchEvent(new Event('change', { bubbles: true }));
+      });
     });
     if (filter) {
       filter.addEventListener('input', function () {
         var q = (filter.value || '').trim().toLowerCase();
         chips.forEach(function (chip) {
           var name = (chip.getAttribute('data-tag-name') || '').toLowerCase();
-          chip.classList.toggle('is-hidden', q !== '' && name.indexOf(q) === -1);
+          var slug = (chip.getAttribute('data-tag-slug') || '').toLowerCase();
+          var hit = q === '' || name.indexOf(q) !== -1 || slug.indexOf(q) !== -1;
+          chip.classList.toggle('is-hidden', !hit);
         });
       });
     }

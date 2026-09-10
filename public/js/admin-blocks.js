@@ -13,6 +13,7 @@
     { id: 'h4', label: 'عنوان ۳', icon: 'H3' },
     { id: 'list', label: 'فهرست', icon: '•' },
     { id: 'olist', label: 'فهرست عددی', icon: '1.' },
+    { id: 'toc', label: 'فهرست مطالب', icon: '☰' },
     { id: 'quote', label: 'نقل‌قول', icon: '❝' },
     { id: 'image', label: 'تصویر', icon: '🖼' },
     { id: 'code', label: 'کد', icon: '</>' },
@@ -77,6 +78,12 @@
         blocks.push({ id: uid(), type: 'h3', html: node.innerHTML });
       } else if (tag === 'h4' || tag === 'h5' || tag === 'h6') {
         blocks.push({ id: uid(), type: 'h4', html: node.innerHTML });
+      } else if (tag === 'nav' && /\bpost-toc\b/.test(node.className || '')) {
+        blocks.push({ id: uid(), type: 'toc' });
+      } else if (tag === 'ul' && /\bpost-toc\b/.test(node.className || '')) {
+        blocks.push({ id: uid(), type: 'toc' });
+      } else if (tag === 'ol' && /\bpost-toc\b/.test(node.className || '')) {
+        blocks.push({ id: uid(), type: 'toc' });
       } else if (tag === 'ul') {
         blocks.push({ id: uid(), type: 'list', html: listToText(node) });
       } else if (tag === 'ol') {
@@ -149,13 +156,55 @@
     }).filter(Boolean).join('\n');
   }
 
+  function slugifyHeading(html, used) {
+    var t = stripHtml(html).replace(/\s+/g, ' ').trim();
+    var s = t
+      .replace(/[^\u0600-\u06FFa-zA-Z0-9\s\-]/g, '')
+      .trim()
+      .replace(/\s+/g, '-')
+      .toLowerCase();
+    if (!s) s = 'bakhsh';
+    var base = s;
+    var n = 2;
+    while (used[s]) {
+      s = base + '-' + n;
+      n += 1;
+    }
+    used[s] = true;
+    return s;
+  }
+
+  function tocHtmlFromHeadings(headings) {
+    if (!headings.length) {
+      return '<nav class="post-toc" aria-label="فهرست مطالب"><p class="post-toc-title">فهرست مطالب</p><p class="muted">عنوان‌های مطلب را اضافه کنید تا اینجا لینک شوند.</p></nav>';
+    }
+    var items = headings.map(function (h) {
+      return '<li class="post-toc-l' + h.level + '"><a href="#' + escapeHtml(h.id) + '">' + escapeHtml(h.text) + '</a></li>';
+    }).join('');
+    return '<nav class="post-toc" aria-label="فهرست مطالب"><p class="post-toc-title">فهرست مطالب</p><ol>' + items + '</ol></nav>';
+  }
+
   /* ---------- blocks → HTML ---------- */
   function blocksToHtml(blocks) {
+    var used = {};
+    var headings = [];
+    blocks.forEach(function (b) {
+      if (b.type === 'h2' || b.type === 'h3' || b.type === 'h4') {
+        var id = slugifyHeading(b.html || '', used);
+        b._hid = id;
+        headings.push({
+          id: id,
+          level: b.type === 'h2' ? 2 : (b.type === 'h3' ? 3 : 4),
+          text: stripHtml(b.html || '')
+        });
+      }
+    });
     return blocks.map(function (b) {
       switch (b.type) {
-        case 'h2': return '<h2>' + (b.html || '') + '</h2>';
-        case 'h3': return '<h3>' + (b.html || '') + '</h3>';
-        case 'h4': return '<h4>' + (b.html || '') + '</h4>';
+        case 'toc': return tocHtmlFromHeadings(headings);
+        case 'h2': return '<h2 id="' + b._hid + '">' + (b.html || '') + '</h2>';
+        case 'h3': return '<h3 id="' + b._hid + '">' + (b.html || '') + '</h3>';
+        case 'h4': return '<h4 id="' + b._hid + '">' + (b.html || '') + '</h4>';
         case 'quote': return '<blockquote>' + (b.html || '') + '</blockquote>';
         case 'code': return '<pre><code>' + escapeHtml(b.text || '') + '</code></pre>';
         case 'hr': return '<hr>';
@@ -316,6 +365,13 @@
 
     if (type === 'hr') {
       container.appendChild(el('div', 'be-hr-preview', '<hr><span>جداکننده</span>'));
+      return;
+    }
+
+    if (type === 'toc') {
+      var tocBox = el('div', 'be-toc-preview');
+      tocBox.innerHTML = '<strong>فهرست مطالب</strong><p>از عنوان‌های همین مطلب (عنوان ۱ و ۲ و ۳) لینک ساخته می‌شود و بالای متن می‌آید.</p>';
+      container.appendChild(tocBox);
       return;
     }
 
@@ -522,6 +578,17 @@
       var b = el('button', 'be-chip', '<span class="be-chip-ico">' + t.icon + '</span>' + t.label);
       b.type = 'button';
       b.addEventListener('click', function () {
+        if (t.id === 'toc') {
+          var exists = state.blocks.some(function (x) { return x.type === 'toc'; });
+          if (exists) {
+            api.syncTextarea();
+            return;
+          }
+          state.blocks.unshift({ id: uid(), type: 'toc' });
+          api.rerender();
+          api.syncTextarea();
+          return;
+        }
         var block = { id: uid(), type: t.id };
         if (t.id === 'image') { block.src = ''; block.alt = ''; block.caption = ''; }
         else if (t.id === 'code' || t.id === 'html') block.text = '';

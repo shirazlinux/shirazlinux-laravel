@@ -252,11 +252,11 @@ html{scrollbar-gutter:stable}
 .rev-list li{display:flex;flex-direction:column;gap:.1rem;font-size:.82rem;padding:.4rem .5rem;border-radius:10px;background:#fafaf9;border:1px solid #f0ebe4}
 .rev-list strong{font-size:.84rem}
 .rail-meta-desc{min-height:72px!important;font-size:.88rem!important}
-.rail-card--tags{padding:0;overflow:hidden}
+.rail-card--tags{padding:0;overflow:visible}
 .tag-picker--rail{
   margin:0;border:0;box-shadow:none;border-radius:16px;padding:.95rem 1rem 1rem;
 }
-.tag-picker--rail .tag-picker-list{max-height:180px}
+.tag-picker--rail .tag-picker-list{max-height:320px}
 .rail-danger-link{
   display:block;width:100%;border:1px solid #fecaca;background:#fef2f2;color:#b91c1c;
   border-radius:12px;padding:.65rem;font:inherit;font-weight:800;cursor:pointer;
@@ -454,6 +454,13 @@ textarea.mono{min-height:280px;font-family:ui-monospace,monospace;font-size:.88r
   border-radius:12px;overflow:hidden;border:1px solid var(--border);background:#f5f5f4;max-height:280px;
 }
 .be-image-prev img{display:block;width:100%;height:auto;max-height:280px;object-fit:contain;background:#0c0a09}
+.be-toc-preview{
+  border:1px dashed #fdba74;background:#fff7ed;border-radius:12px;padding:.85rem 1rem;color:#9a3412;
+}
+.be-toc-preview strong{display:block;margin-bottom:.25rem}
+.be-toc-preview p{margin:0;font-size:.88rem;line-height:1.6;color:#78716c}
+.tag-picker-selected{display:flex;flex-wrap:wrap;gap:.35rem;margin:0 0 .55rem}
+.tag-picker-selected[hidden]{display:none!important}
 .be-hr-preview{
   display:flex;align-items:center;gap:.75rem;padding:.8rem;color:#a8a29e;font-size:.85rem;font-weight:700;
 }
@@ -491,9 +498,10 @@ textarea.mono{min-height:280px;font-family:ui-monospace,monospace;font-size:.88r
 }
 .tag-picker-list{
   display:flex;flex-wrap:wrap;gap:.45rem;
-  max-height:220px;overflow:auto;padding:.15rem .1rem .25rem;
+  max-height:320px;overflow:auto;padding:.15rem .1rem .25rem;
 }
 .tag-chip{
+  position:relative;
   display:inline-flex;align-items:center;gap:.4rem;
   margin:0;padding:.38rem .75rem .38rem .55rem;
   border:1px solid var(--border);border-radius:999px;
