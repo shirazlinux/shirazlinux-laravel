@@ -41,9 +41,10 @@ class HandleRedirects
                     $path,
                     rtrim($path, '/') ?: '/',
                     '/'.ltrim($request->getPathInfo(), '/'),
+                    rawurldecode($path),
                 ]);
                 $candidates = array_map(function ($p) {
-                    $p = (string) $p;
+                    $p = rawurldecode((string) $p);
                     if (str_contains($p, '?')) {
                         $p = strstr($p, '?', true) ?: $p;
                     }
