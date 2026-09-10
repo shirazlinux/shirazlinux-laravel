@@ -1,6 +1,6 @@
 @php
     $url = url('/'.$post->slug);
-    $eventSlugs = ['event', 'dorehami', 'workshop', 'conference', 'freesoftwaretalks', 'post'];
+    $eventSlugs = ['event', 'dorehami', 'workshop', 'conference', 'freesoftwaretalks'];
     $aspect = $imageAspect ?? null;
     $compact = ! empty($compact);
 

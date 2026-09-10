@@ -37,7 +37,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="https://umami.sudoshz.ir">
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('css/site.css') }}?v=20260910poster">
+    <link rel="stylesheet" href="{{ asset('css/site.css') }}?v=20260910poster-revert">
     <style>
       .logo img{height:48px!important;width:auto!important;max-width:140px!important;max-height:48px!important;object-fit:contain;filter:brightness(0)}
       html[data-theme="dark"] .logo img{filter:brightness(0) invert(1)}

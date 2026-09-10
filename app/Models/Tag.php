@@ -72,12 +72,6 @@ class Tag extends Model
         ], true);
     }
 
-    /** Square designed posters (پست آزاد). */
-    public function isPosterLike(): bool
-    {
-        return $this->slug === 'post';
-    }
-
     /** Guide / community reading lists — prefer large landscape covers. */
     public function isGuideLike(): bool
     {
@@ -87,6 +81,7 @@ class Tag extends Model
             'free-software',
             'libre-learn',
             'librelearn',
+            'post',
         ], true);
     }
 }
