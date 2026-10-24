@@ -7,7 +7,56 @@ cd "$ROOT"
 
 ZIP=/tmp/laravel-hot.zip
 PHP=/tmp/laravel-hot.php
-rm -f "$ZIP" "$PHP"
+MZIP=/tmp/laravel-media.zip
+rm -f "$ZIP" "$PHP" "$MZIP"
+
+# --- Media sync (add/update only, never delete): compare public/media/posts with prod by size ---
+LISTN="media-list-$(openssl rand -hex 8).php"
+cat > "/tmp/$LISTN" <<'LPHP'
+<?php
+header('Content-Type: text/plain; charset=utf-8');
+$root = __DIR__.'/media/posts';
+if (is_dir($root)) {
+    $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS));
+    foreach ($it as $f) { if ($f->isFile()) { echo substr($f->getPathname(), strlen($root) + 1), "\t", $f->getSize(), "\t", $f->getMTime(), "\n"; } }
+}
+echo "#END\n";
+@unlink(__FILE__);
+LPHP
+sftp -o BatchMode=yes sudoshz <<EOF >/dev/null
+put /tmp/$LISTN public_html/$LISTN
+bye
+EOF
+curl -fsS "https://sudoshz.ir/$LISTN" > /tmp/media-prod.txt || true
+rm -f "/tmp/$LISTN"
+if grep -q '^#END$' /tmp/media-prod.txt; then
+  python3 - "$ROOT/public/media/posts" /tmp/media-prod.txt > /tmp/media-changed.txt <<'PY'
+import os, sys
+root, listing = sys.argv[1], sys.argv[2]
+prod = {}
+for line in open(listing, encoding='utf-8'):
+    line = line.rstrip('\n')
+    parts = line.split('\t')
+    if len(parts) == 3:
+        prod[parts[0]] = (int(parts[1]), int(parts[2]))
+for d, _, files in os.walk(root):
+    for n in files:
+        full = os.path.join(d, n)
+        rel = os.path.relpath(full, root)
+        st = os.stat(full)
+        cur = prod.get(rel)
+        # upload if missing on prod, or differing in size AND local copy is newer (never clobber newer prod edits)
+        if cur is None or (cur[0] != st.st_size and st.st_mtime > cur[1]):
+            print(rel)
+PY
+  NMEDIA=$(wc -l < /tmp/media-changed.txt)
+  echo "media: $NMEDIA new/changed file(s) to upload"
+  if [ "$NMEDIA" -gt 0 ]; then
+    (cd "$ROOT/public/media/posts" && zip -q "$MZIP" -@ < /tmp/media-changed.txt)
+  fi
+else
+  echo "media: could not read prod listing, skipping media sync"
+fi
 
 zip -rq "$ZIP" \
   app bootstrap/app.php bootstrap/providers.php config routes \
@@ -38,9 +87,20 @@ $zip->extractTo($base); $zip->close(); echo "extracted to $base\n";
 @mkdir($web.'/media/icons', 0755, true);
 @mkdir($web.'/media/projects', 0755, true);
 
-if (is_file($base.'/public/css/site.css')) {
-    copy($base.'/public/css/site.css', $web.'/css/site.css');
-    echo "css synced\n";
+foreach (glob($base.'/public/css/*.css') ?: [] as $cssf) {
+    copy($cssf, $web.'/css/'.basename($cssf));
+}
+echo "css synced\n";
+$mzipPath = __DIR__.'/laravel-media.zip';
+if (is_file($mzipPath)) {
+    $mz = new ZipArchive();
+    if ($mz->open($mzipPath) === true) {
+        @mkdir($web.'/media/posts', 0755, true);
+        $mz->extractTo($web.'/media/posts'); // add/overwrite only, never deletes
+        echo "media/posts synced (".$mz->numFiles." files)\n";
+        $mz->close();
+    }
+    @unlink($mzipPath);
 }
 if (is_dir($base.'/public/js')) {
     foreach (glob($base.'/public/js/*') ?: [] as $jsf) {
@@ -250,8 +310,14 @@ try {
             $pdo->exec("ALTER TABLE users ADD COLUMN must_change_password INTEGER NOT NULL DEFAULT 0");
             echo "users.must_change_password\n";
         }
-        $nForce = $pdo->exec("UPDATE users SET must_change_password=1 WHERE email='writer@sudoshz.ir'");
-        if ($nForce) { echo "writer must_change_password on\n"; }
+        // one-time only: force writer password change once, then never again (marker in site_settings)
+        $mk = $pdo->query("SELECT 1 FROM site_settings WHERE key='deploy_writer_pw_forced'")->fetchColumn();
+        if (! $mk) {
+            $nForce = $pdo->exec("UPDATE users SET must_change_password=1 WHERE email='writer@sudoshz.ir'");
+            if ($nForce) { echo "writer must_change_password on (one-time)\n"; }
+            $now0 = date('Y-m-d H:i:s');
+            $pdo->prepare("INSERT INTO site_settings (key,value,created_at,updated_at) VALUES ('deploy_writer_pw_forced','1',?,?)")->execute([$now0, $now0]);
+        }
         $nRole = $pdo->exec("UPDATE users SET role='writer' WHERE role IN ('editor','author')");
         if ($nRole) { echo "users.role editor/author -> writer ($nRole)\n"; }
         $pcols = array_column($pdo->query("PRAGMA table_info(posts)")->fetchAll(PDO::FETCH_ASSOC), 'name');
@@ -409,6 +475,7 @@ PHP
 sftp -o BatchMode=yes sudoshz <<EOF
 put $ZIP public_html/laravel-hot.zip
 put $PHP public_html/laravel-hot.php
+$( [ -f "$MZIP" ] && echo "put $MZIP public_html/laravel-media.zip" )
 bye
 EOF
 
