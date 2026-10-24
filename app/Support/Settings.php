@@ -23,7 +23,7 @@ class Settings
             'footer_text' => 'جامعه نرم‌افزار آزاد شیراز',
 
             // SEO
-            'seo_title_suffix' => 'جامعه نرم‌افزار آزاد',
+            'seo_title_suffix' => 'شیرازلینوکس',
             'seo_default_description' => 'شیرازلینوکس؛ جامعه نرم‌افزار آزاد شیراز — نشست، آموزش و ترویج آزادی کاربران.',
             'seo_og_image' => 'media/slider/slide1.jpg',
             'seo_robots' => 'index,follow',

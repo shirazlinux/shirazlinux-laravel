@@ -1,6 +1,7 @@
 @extends('layouts.site')
 @section('title','۴۰۴')
 @section('robots','noindex,follow')
+@section('error_page','1')
 @section('meta_description','صفحه‌ای که دنبالش بودید پیدا نشد.')
 @section('content')
 <div class="container">

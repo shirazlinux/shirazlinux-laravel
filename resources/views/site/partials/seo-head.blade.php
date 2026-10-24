@@ -2,17 +2,27 @@
   use App\Support\Seo;
 
   $siteName = setting('site_name', 'شیرازلینوکس');
-  $titleSuffix = setting('seo_title_suffix', 'جامعه نرم‌افزار آزاد');
+  $brand = 'شیرازلینوکس';
+  $homeTitle = 'شیرازلینوکس؛ جامعه نرم‌افزار آزاد شیراز';
+  $titleSuffix = trim((string) setting('seo_title_suffix', $brand));
+  if ($titleSuffix === '' || mb_strpos($titleSuffix, $brand) === false) {
+      $titleSuffix = $brand;
+  }
   $pageTitle = trim($__env->yieldContent('title', $siteName));
   // Strip ZWSP, ZWJ and BOM. Keep ZWNJ (U+200C) so Persian nim-fasele stays in og:title.
   $pageTitle = preg_replace('/[\x{200B}\x{200D}\x{FEFF}]/u', '', $pageTitle) ?? $pageTitle;
   $pageTitle = trim($pageTitle);
-  // Home / site-name titles: avoid "خانه | …" redundancy
-  if (in_array($pageTitle, ['خانه', 'Home', $siteName], true)) {
-      $fullTitle = $siteName.($titleSuffix ? ' | '.$titleSuffix : '');
-      $pageTitle = $siteName;
+  $hasBrand = static fn (string $s): bool => mb_strpos($s, 'شیرازلینوکس') !== false
+      || mb_strpos($s, 'شیراز لینوکس') !== false
+      || mb_stripos($s, 'shirazlinux') !== false;
+  if (request()->routeIs('home') || in_array($pageTitle, ['خانه', 'Home', $siteName, $brand], true)) {
+      $pageTitle = $homeTitle;
+      $fullTitle = $homeTitle;
+  } elseif ($hasBrand($pageTitle)) {
+      // Title already carries the brand: no suffix (avoids double brand)
+      $fullTitle = $pageTitle;
   } else {
-      $fullTitle = $pageTitle.($titleSuffix ? ' | '.$titleSuffix : '');
+      $fullTitle = $pageTitle.' | '.$titleSuffix;
   }
 
   $desc = Seo::description(
@@ -20,9 +30,13 @@
       160
   );
 
+  $isErrorPage = trim($__env->yieldContent('error_page', '')) !== '';
   $robots = trim($__env->yieldContent('robots', ''));
   if ($robots === '') {
       $robots = setting('seo_robots', 'index,follow');
+  }
+  if ($isErrorPage) {
+      $robots = 'noindex,follow';
   }
   if (setting('maintenance_mode') && ! auth()->check()) {
       $robots = 'noindex,nofollow';
@@ -61,9 +75,11 @@
 @if($keywords)
 <meta name="keywords" content="{{ $keywords }}">
 @endif
+@unless($isErrorPage)
 <link rel="canonical" href="{{ $canonical }}">
 <link rel="alternate" hreflang="fa" href="{{ $canonical }}">
 <link rel="alternate" hreflang="x-default" href="{{ $canonical }}">
+@endunless
 @if(setting('seo_google_verification'))
 <meta name="google-site-verification" content="{{ setting('seo_google_verification') }}">
 @endif
