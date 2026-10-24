@@ -60,7 +60,7 @@ fi
 
 zip -rq "$ZIP" \
   app bootstrap/app.php bootstrap/providers.php config routes \
-  resources/views public/css public/js public/media/icons public/media/projects public/robots.txt public/.htaccess public/index.php public/index.php84 public/php84-guard.php \
+  resources/views public/css public/js public/media/icons public/media/projects public/robots.txt public/.htaccess deploy/prod-htaccess public/index.php public/index.php84 public/php84-guard.php \
   composer.json composer.lock README-MIGRATION.md
 
 cat > "$PHP" <<'PHP'
@@ -109,7 +109,7 @@ if (is_dir($base.'/public/js')) {
     echo "js synced\n";
 }
 
-$robots = "User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /admin/\nDisallow: /analytics/\nDisallow: /preview\nDisallow: /preview/\nDisallow: /up\nSitemap: https://sudoshz.ir/sitemap.xml\n\nUser-agent: Googlebot\nAllow: /\nDisallow: /admin\nDisallow: /preview\n\nUser-agent: Googlebot-Image\nAllow: /media/\n";
+$robots = "User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /admin/\nDisallow: /analytics/\nDisallow: /preview\nDisallow: /preview/\nDisallow: /up\nDisallow: /wp-admin/\nDisallow: /wp-content/\nDisallow: /wp-includes/\nDisallow: /xmlrpc.php\nDisallow: /items/\nDisallow: /review/\nDisallow: /product/\nDisallow: /product-image/\nDisallow: /products/\nDisallow: /productSearch\nDisallow: /new-arrival\nDisallow: /imagesearch\nDisallow: /listing/\nDisallow: /shop/\nDisallow: /shop$\nDisallow: /category/\nDisallow: /collections/\nDisallow: /catalog/\nDisallow: /search/result\nDisallow: /blogs/\nDisallow: /cate-\nSitemap: https://sudoshz.ir/sitemap.xml\n\nUser-agent: Googlebot\nAllow: /\nDisallow: /admin\nDisallow: /preview\n\nUser-agent: Googlebot-Image\nAllow: /media/\n";
 @file_put_contents($web.'/robots.txt', $robots);
 @file_put_contents($base.'/public/robots.txt', $robots);
 echo "robots fallback written\n";
@@ -123,8 +123,14 @@ try {
             $st = $pdo->prepare("INSERT INTO site_settings (key,value,created_at,updated_at) VALUES ('robots_txt',?,?,?)
                 ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at");
             $now = date('Y-m-d H:i:s');
-            $st->execute(["User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /admin/\nDisallow: /analytics/\nDisallow: /preview\nDisallow: /preview/\nSitemap: {sitemap}\n", $now, $now]);
+            $st->execute(["User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /admin/\nDisallow: /analytics/\nDisallow: /preview\nDisallow: /preview/\nDisallow: /wp-admin/\nDisallow: /wp-content/\nDisallow: /wp-includes/\nDisallow: /xmlrpc.php\nDisallow: /items/\nDisallow: /review/\nDisallow: /product/\nDisallow: /product-image/\nDisallow: /products/\nDisallow: /productSearch\nDisallow: /new-arrival\nDisallow: /imagesearch\nDisallow: /listing/\nDisallow: /shop/\nDisallow: /shop$\nDisallow: /category/\nDisallow: /collections/\nDisallow: /catalog/\nDisallow: /search/result\nDisallow: /blogs/\nDisallow: /cate-\nSitemap: {sitemap}\n", $now, $now]);
             echo "robots_txt setting synced\n";
+        } elseif (!str_contains((string)$row['value'], 'Disallow: /wp-admin/')) {
+            // add the 410 junk prefixes to the existing setting (keep custom lines), before the first Sitemap line
+            $junk = "Disallow: /wp-admin/\nDisallow: /wp-content/\nDisallow: /wp-includes/\nDisallow: /xmlrpc.php\nDisallow: /items/\nDisallow: /review/\nDisallow: /product/\nDisallow: /product-image/\nDisallow: /products/\nDisallow: /productSearch\nDisallow: /new-arrival\nDisallow: /imagesearch\nDisallow: /listing/\nDisallow: /shop/\nDisallow: /shop$\nDisallow: /category/\nDisallow: /collections/\nDisallow: /catalog/\nDisallow: /search/result\nDisallow: /blogs/\nDisallow: /cate-\n";
+            $v = preg_replace('/^Sitemap:/m', $junk.'Sitemap:', (string)$row['value'], 1);
+            $pdo->prepare("UPDATE site_settings SET value=?, updated_at=? WHERE key='robots_txt'")->execute([$v, date('Y-m-d H:i:s')]);
+            echo "robots_txt junk paths added\n";
         }
     }
 } catch (Throwable $e) {
@@ -195,6 +201,13 @@ if ($ht === '' || strpos($ht, 'Laravel on apex') === false) {
     // Minimal safe fallback (full apex htaccess comes from cutover)
     $laravelHt = is_file($base.'/public/.htaccess') ? file_get_contents($base.'/public/.htaccess') : '';
     $ht = "<IfModule mime_module>\n  AddHandler application/x-httpd-ea-php84 .php .php8 .phtml\n</IfModule>\n".$laravelHt;
+}
+// Never drop the SEO 410/redirect block: if it is missing, restore the committed prod htaccess
+$prodHt = $base.'/deploy/prod-htaccess';
+if (is_file($prodHt) && strpos($ht, 'RedirectMatch 410') === false) {
+    @copy($htPath, $htPath.'.bak-deploy-'.date('Ymd-His'));
+    $ht = file_get_contents($prodHt);
+    echo "htaccess: restored SEO 410/redirect block from deploy/prod-htaccess\n";
 }
 // cPanel MultiPHP rewrites a php82 handler at the file END; last AddHandler wins.
 $ht = str_replace('application/x-httpd-ea-php82', 'application/x-httpd-ea-php84', $ht);

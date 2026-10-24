@@ -1,0 +1,162 @@
+# Laravel .php84 is immune to MultiPHP (.php) rewrites
+<IfModule mime_module>
+  AddHandler application/x-httpd-ea-php84 .php84
+</IfModule>
+<FilesMatch "\.php84$">
+  SetHandler application/x-httpd-ea-php84
+</FilesMatch>
+DirectoryIndex index.php84 index.php index.html index.htm
+
+# BEGIN cPanel-generated php ini directives, do not edit
+<IfModule php7_module>
+   php_value error_log "/home/sudoshzi/logs/php.error.log"
+   php_flag log_errors On
+</IfModule>
+<IfModule lsapi_module>
+   php_value error_log "/home/sudoshzi/logs/php.error.log"
+   php_flag log_errors On
+</IfModule>
+# END cPanel-generated php ini directives
+
+# BEGIN php2shell-mitigation 2026-10-22
+<IfModule lsapi_module>
+   php_flag session.upload_progress.enabled Off
+</IfModule>
+<IfModule php_module>
+   php_flag session.upload_progress.enabled Off
+</IfModule>
+# END php2shell-mitigation
+
+# Laravel on apex (replaces static main-sudoshz). Sub-apps keep physical dirs.
+
+<IfModule mime_module>
+  AddHandler application/x-httpd-ea-php84 .php .php8 .phtml
+</IfModule>
+
+Options -MultiViews -Indexes
+DirectorySlash Off
+RewriteEngine On
+
+# Separated projects (outside Laravel CMS)
+RewriteRule ^ada-zangeman/?$ https://ada.fsfp.ir/ [R=301,L]
+RewriteRule ^ada-zangeman/(.*)$ https://ada.fsfp.ir/$1 [R=301,L]
+# free-software-history is the FSF timeline microsite (not free.sudoshz.ir)
+RewriteRule ^deltachat-list(/.*)?$ https://delta.sudoshz.ir/ [R=301,L]
+RewriteRule ^free-software-history(/.*)?$ https://fsfp.ir/ [R=301,L]
+
+
+
+# Force HTTPS
+RewriteCond %{HTTPS} !=on
+RewriteCond %{HTTP:X-Forwarded-Proto} !https
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# www → apex
+RewriteCond %{HTTP_HOST} ^www\.sudoshz\.ir$ [NC]
+RewriteRule ^(.*)$ https://sudoshz.ir/$1 [R=301,L]
+
+# Old test deploy → apex
+RewriteRule ^laravel-test(?:/(.*))?$ https://sudoshz.ir/$1 [R=301,L]
+
+# Hide any residual internal publish path
+RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /+main-sudoshz(/?[^\ ]*) [NC]
+RewriteRule ^ https://sudoshz.ir%1 [R=301,L]
+
+# Strip junk homepage query ?e= (same body as /)
+RewriteCond %{QUERY_STRING} (^|&)e=
+RewriteRule ^$ https://sudoshz.ir/? [R=301,L]
+
+# Legacy SEO redirects
+RewriteRule ^projects/?$ https://sudoshz.ir/libreplanet2025 [R=301,L]
+RewriteRule ^libreplanet/?$ https://sudoshz.ir/libreplanet2025 [R=301,L]
+# SEO 2026-10-19: duplicate policy, dead blog/news, fsf history in one hop
+RewriteRule ^policy/?$ https://sudoshz.ir/about/policy [R=301,L]
+RewriteRule ^promotion-policy/?$ https://sudoshz.ir/about/promotion-policy [R=301,L]
+RewriteRule ^community-guidelines/?$ https://sudoshz.ir/about/community-guidelines [R=301,L]
+RewriteRule ^(blog|news)/?$ https://sudoshz.ir/tags/post [R=301,L]
+RewriteRule ^fsf-history-redirect/?$ https://fsfp.ir/ [R=301,L]
+RewriteCond %{HTTP_HOST} ^(www\.)?sudoshz\.ir$ [NC]
+RewriteRule ^event(/.*)?$ https://event.sudoshz.ir$1 [R=301,L]
+# fsf-history-redirect kept as CMS post
+Redirect 301 /devops-conf-2023 https://devops.sudoshz.ir/
+Redirect 301 /gnulinux-conf https://gnulinux.sudoshz.ir/
+# Junk shop/WP URLs: 410 (do NOT 301 to home — that inflates crawl duplicates)
+RedirectMatch 410 (?i)^/items(/.*)?$
+RedirectMatch 410 (?i)^/review(/.*)?$
+RedirectMatch 410 (?i)^/product-image(/.*)?$
+RedirectMatch 410 (?i)^/product(/.*)?$
+RedirectMatch 410 (?i)^/wp-admin(/.*)?$
+RedirectMatch 410 (?i)^/wp-content(/.*)?$
+RedirectMatch 410 (?i)^/wp-includes(/.*)?$
+RedirectMatch 410 (?i)^/xmlrpc\.php$
+RedirectMatch 410 (?i)^/new-arrival(/.*)?$
+RedirectMatch 410 (?i)^/imagesearch(/.*)?$
+RedirectMatch 410 (?i)^/listing(/.*)?$
+RedirectMatch 410 (?i)^/products(/.*)?$
+RedirectMatch 410 (?i)^/productSearch(/.*)?$
+RedirectMatch 410 (?i)^/shop(/.*)?$
+RedirectMatch 410 (?i)^/category(/.*)?$
+RedirectMatch 410 (?i)^/collections(/.*)?$
+RedirectMatch 410 (?i)^/catalog(/.*)?$
+RedirectMatch 410 (?i)^/search/result(/.*)?$
+RedirectMatch 410 (?i)^/blogs(/.*)?$
+RedirectMatch 410 (?i)^/cate-[0-9]+-[0-9]+/?$
+RedirectMatch 410 (?i)^/blog/[0-9]+/?$
+
+# Fake shop search ?k=  (real /search stays)
+RewriteCond %{QUERY_STRING} (^|&)k=
+RewriteRule ^search/?$ - [G,L]
+
+RewriteCond %{HTTP:Authorization} .
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+RewriteCond %{HTTP:x-xsrf-token} .
+RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
+
+# Trailing slash → bare path (skip real dirs/files)
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_URI} (.+)/$
+RewriteRule ^ %1 [L,R=301]
+
+# Front controller
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.php84 [L]
+
+# BEGIN security-headers managed
+<IfModule mod_headers.c>
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+    Header always set Cross-Origin-Opener-Policy "same-origin-allow-popups"
+    Header always set X-XSS-Protection "0"
+    Header always unset X-Powered-By
+    Header unset X-Powered-By
+</IfModule>
+
+<IfModule mod_authz_core.c>
+    <FilesMatch "(?i)^(\.env|\.git|composer\.(json|lock)|package(-lock)?\.json|\.user\.ini|php\.ini|\.htpasswd|files\.publii\.json|htaccess\.txt|INDEXNOW-KEY\.txt|config\.php|config\.sample\.php)$">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css
+  AddOutputFilterByType DEFLATE text/javascript application/javascript application/json
+  AddOutputFilterByType DEFLATE application/xml application/rss+xml application/atom+xml
+  AddOutputFilterByType DEFLATE image/svg+xml
+</IfModule>
+# END security-headers managed
+# php -- BEGIN cPanel-generated handler, do not edit
+# Set the “ea-php84” package as the default “PHP” programming language.
+<IfModule mime_module>
+  AddHandler application/x-httpd-ea-php84 .php .php8 .phtml
+</IfModule>
+# php -- END cPanel-generated handler, do not edit
+
+# FORCE PHP 8.4 (must stay AFTER cPanel handler — last AddHandler wins)
+<IfModule mime_module>
+  AddHandler application/x-httpd-ea-php84 .php .php8 .phtml
+</IfModule>
