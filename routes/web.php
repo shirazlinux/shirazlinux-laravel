@@ -207,6 +207,20 @@ Route::post('/{slug}/comments', [CommentController::class, 'store'])
     ->middleware('throttle:8,10')
     ->name('comments.store');
 
+// Fediverse landing page (code-based so it ships with deploy)
+Route::get('/fediverse', function () {
+    $fediPosts = Post::query()
+        ->published()
+        ->postsOnly()
+        ->whereHas('tags', fn ($q) => $q->where('slug', 'fediverse'))
+        ->with(['author', 'tags'])
+        ->orderByDesc('published_at')
+        ->limit(12)
+        ->get();
+
+    return view('site.fediverse', compact('fediPosts'));
+})->name('fediverse');
+
 // Content by slug last
 // Separated projects (ada / free / delta) live outside Laravel on their own docroots/subdomains.
 Route::get('/{slug}', function (string $slug) {

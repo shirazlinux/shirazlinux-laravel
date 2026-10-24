@@ -33,7 +33,7 @@
   <div><label>تلگرام</label><input name="telegram" value="{{ old('telegram',$author->telegram) }}" dir="ltr"></div>
 </div>
 <div class="row">
-  <div><label>ماس‌تودون</label><input name="mastodon" value="{{ old('mastodon',$author->mastodon) }}" dir="ltr"></div>
+  <div><label>ماستادون</label><input name="mastodon" value="{{ old('mastodon',$author->mastodon) }}" dir="ltr"></div>
   <div><label>GitHub / Codeberg</label><input name="github" value="{{ old('github',$author->github) }}" dir="ltr"></div>
 </div>
 

@@ -1,0 +1,21 @@
+/* صفحه فدیورس و کارت صفحه اصلی */
+.fedi-alts{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.9rem;margin:1rem 0 1.5rem}
+.fedi-alt{display:flex;flex-direction:column;gap:.3rem;padding:1rem;border:1px solid var(--border,#e7e5e4);border-radius:12px;background:var(--surface,transparent);color:var(--text)!important;text-decoration:none!important}
+.fedi-alt:hover{border-color:var(--brand)}
+.fedi-alt strong{font-size:1.05rem}
+.fedi-alt-instead{color:var(--brand-dark);font-size:.9rem;font-weight:600}
+.fedi-steps li{margin-bottom:.6rem}
+.fedi-follow{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem;padding:1.1rem 1.25rem;border:1px solid var(--brand-border);background:var(--brand-soft);border-radius:14px;margin:1rem 0 1.5rem}
+.fedi-follow p{margin:.2rem 0}
+.fedi-follow-handle{font-weight:700;font-size:1.1rem;text-align:right}
+.fedi-follow-btn{white-space:nowrap}
+.fedi-posts{margin:1rem 0}
+.fedi-home-card{display:grid;grid-template-columns:minmax(0,260px) 1fr;gap:1rem;align-items:center;margin:0 0 1.75rem;padding:.75rem;border:1px solid var(--brand-border);background:var(--brand-soft);border-radius:14px;color:var(--text)!important;text-decoration:none!important}
+.fedi-home-card:hover{border-color:var(--brand)}
+.fedi-home-card img{width:100%;height:auto;border-radius:10px;display:block}
+.fedi-home-card-body{display:flex;flex-direction:column;gap:.35rem}
+.fedi-home-card-body strong{font-size:1.15rem}
+.fedi-home-card-go{color:var(--brand-dark);font-weight:700}
+@media (max-width:640px){.fedi-home-card{grid-template-columns:1fr}}
+.fedi-about-callout{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem 1rem;margin:1.5rem 0;padding:1rem 1.25rem;border:1px solid var(--brand-border);background:var(--brand-soft);border-radius:14px}
+.fedi-about-callout span{flex:1 1 220px}

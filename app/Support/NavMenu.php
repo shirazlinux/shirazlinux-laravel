@@ -94,6 +94,7 @@ class NavMenu
             ['name' => 'ویدیوها', 'url' => self::resolveUrl('/tags/videos'), 'description' => 'ویدیوهای آموزشی'],
             ['name' => 'راهنمای جامعه', 'url' => self::resolveUrl('/tags/free-software-community-guide'), 'description' => 'چطور به جامعه بپیوندی'],
             ['name' => 'نرم‌افزار آزاد', 'url' => self::resolveUrl('/what-is-free-software'), 'description' => 'آزادی در نرم‌افزار یعنی چه'],
+            ['name' => 'فدیورس', 'url' => self::resolveUrl('/fediverse'), 'description' => 'شبکه اجتماعی آزاد و غیرمتمرکز'],
             ['name' => 'حمایت', 'url' => self::resolveUrl('/donate'), 'description' => 'حمایت از جامعه'],
             ['name' => 'تماس', 'url' => self::resolveUrl('/contact'), 'description' => 'با ما در ارتباط باش'],
             ['name' => 'نویسندگان', 'url' => self::resolveUrl('/authors'), 'description' => 'نویسندگان جامعه'],

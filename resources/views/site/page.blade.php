@@ -36,6 +36,11 @@
 <script type="application/ld+json">{!! json_encode($crumbs, JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES) !!}</script>
 @endif
 @endpush
+@if($post->slug === 'about')
+@push('seo')
+<link rel="stylesheet" href="{{ asset('css/fediverse.css') }}?v=20261024">
+@endpush
+@endif
 
 @section('content')
 <div class="container">
@@ -50,6 +55,9 @@
             </figure>
         @endif
         <div class="article-body prose">{!! \App\Support\ContentHtml::prepare($post->body, $post->title) !!}</div>
+        @if($post->slug === 'about')
+            @include('site.partials.about-fediverse')
+        @endif
     </article>
 
     @if(setting('comments_enabled', true))
