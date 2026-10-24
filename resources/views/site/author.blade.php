@@ -48,7 +48,7 @@
             @if($author->bio)<p class="muted">{{ $author->bio }}</p>@endif
             <div style="display:flex;flex-wrap:wrap;gap:.45rem;margin-top:.5rem">
               @foreach([
-                'website'=>'وب','telegram'=>'تلگرام','mastodon'=>'ماس‌تودون','github'=>'گیت'
+                'website'=>'وب','telegram'=>'تلگرام','mastodon'=>'ماستادون','github'=>'گیت'
               ] as $field => $label)
                 @if(!empty($author->{$field}))
                   <a class="badge" href="{{ $author->{$field} }}" target="_blank" rel="noopener me">{{ $label }}</a>

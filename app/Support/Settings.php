@@ -191,7 +191,7 @@ class Settings
     {
         $catalog = [
             'social_telegram' => 'تلگرام',
-            'social_mastodon' => 'ماس‌تودون',
+            'social_mastodon' => 'ماستادون',
             'social_matrix' => 'ماتریکس',
             'social_youtube' => 'یوتیوب',
             'social_codeberg' => 'Codeberg',

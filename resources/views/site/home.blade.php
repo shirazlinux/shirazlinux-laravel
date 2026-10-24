@@ -9,6 +9,9 @@
 @section('og_type', 'website')
 @section('og_image', $homeOg)
 @section('canonical', url('/'))
+@push('seo')
+<link rel="stylesheet" href="{{ asset('css/fediverse.css') }}?v=20261024">
+@endpush
 
 @section('content')
 @if(setting('home_show_slider', true) && !empty($slides))
@@ -73,6 +76,8 @@
     @if(setting('home_show_edu', true))
         @include('site.partials.home-edu')
     @endif
+
+    @include('site.partials.home-fediverse')
 
     @if(setting('home_show_history', true) && $historyPosts->isNotEmpty())
         <section class="content-section section-history" aria-labelledby="history-heading">
