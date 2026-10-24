@@ -11,41 +11,39 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#F1592D" id="meta-theme-color">
+    <meta name="theme-color" content="#0f1419" id="meta-theme-color">
     @include('site.partials.seo-head')
     <link rel="shortcut icon" href="{{ asset('media/website/webicon320.png') }}" type="image/x-icon">
     <link rel="icon" href="{{ asset('media/website/webicon320.png') }}" type="image/png" sizes="316x316">
     <link rel="apple-touch-icon" href="{{ asset('media/website/webicon320.png') }}">
     <link rel="manifest" href="{{ url('/site.webmanifest') }}">
-    {{-- Apply theme before paint to avoid flash --}}
+    {{-- Apply theme before paint to avoid flash — dark charcoal default --}}
     <script>
     (function () {
       try {
         var k = 'shiraz-theme';
         var saved = localStorage.getItem(k);
         var pref = @json($defaultTheme);
-        var theme = saved || (pref === 'light' || pref === 'dark'
-          ? pref
-          : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+        var theme = saved || (pref === 'light' || pref === 'dark' ? pref : 'dark');
         document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
       } catch (e) {
-        document.documentElement.setAttribute('data-theme', 'light');
+        document.documentElement.setAttribute('data-theme', 'dark');
       }
     })();
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="dns-prefetch" href="https://umami.sudoshz.ir">
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('css/site.css') }}?v=20260910poster-revert">
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('css/site.css') }}?v=20261005comments1">
     <style>
-      .logo img{height:48px!important;width:auto!important;max-width:140px!important;max-height:48px!important;object-fit:contain;filter:brightness(0)}
-      html[data-theme="dark"] .logo img{filter:brightness(0) invert(1)}
-      .home-slider .slider{position:relative;height:min(52vw,405px);min-height:220px;overflow:hidden;background:#1c1917}
+      .logo img{height:48px!important;width:auto!important;max-width:140px!important;max-height:48px!important;object-fit:contain;filter:brightness(0) invert(1)}
+      html[data-theme="light"] .logo img{filter:brightness(0)}
+      .home-slider .slider{position:relative;overflow:hidden;background:#0f1419}
       .home-slider .slide{position:absolute!important;inset:0;opacity:0;z-index:1}
       .home-slider .slide.is-active{opacity:1;z-index:2}
       .home-slider .slide img{width:100%!important;height:100%!important;object-fit:cover;display:block}
-      .maint-banner{background:#1c1917;color:#fde68a;padding:.85rem 1rem;text-align:center;font-weight:700}
+      .maint-banner{background:#0a0e12;color:#fde68a;padding:.85rem 1rem;text-align:center;font-weight:700}
     </style>
     @stack('head')
     @if($umamiOn && $umamiId && $umamiScript)
@@ -183,13 +181,23 @@
     </div>
 </footer>
 
+<dialog class="lb" id="site-lightbox" aria-label="نمایش عکس">
+    <div class="lb-frame">
+        <button type="button" class="lb-close" data-lb-close aria-label="بستن">×</button>
+        <button type="button" class="lb-nav prev" data-lb-prev aria-label="قبلی">›</button>
+        <img alt="">
+        <button type="button" class="lb-nav next" data-lb-next aria-label="بعدی">‹</button>
+        <p class="lb-cap"></p>
+    </div>
+</dialog>
+
 <button type="button" class="to-top" id="to-top" aria-label="بازگشت به بالا" title="بالا">
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true">
         <path d="M12 19V5M5 12l7-7 7 7"></path>
     </svg>
 </button>
 
-<script src="{{ asset('js/site.js') }}?v=20260818themefix" defer></script>
+<script src="{{ asset('js/site.js') }}?v=20260922dark1" defer></script>
 <script>
 (function () {
   try {

@@ -73,6 +73,15 @@
         @endif
     </header>
 
+    @if($isEvent && !empty($gallery))
+        @include('site.partials.event-gallery', [
+            'gallery' => $gallery,
+            'galleryTitle' => 'عکس نشست‌ها',
+            'galleryLead' => 'عکس‌هایی که در گزارش رویدادها آمده.',
+            'galleryHeadingId' => 'event-gallery-heading',
+        ])
+    @endif
+
     <div class="section-head tag-list-head">
         <h2 class="section-title">{{ $isEvent ? 'رویدادها و مطالب این بخش' : 'مطالب این بخش' }}</h2>
         <span class="muted">{{ $posts->total() }} مورد</span>

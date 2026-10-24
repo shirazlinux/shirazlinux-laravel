@@ -204,13 +204,34 @@ class HomeController extends Controller
             ->limit(6)
             ->get();
 
+        $eventGallery = [];
+        if (setting('home_show_event_gallery', true)) {
+            $eventGallery = \App\Support\EventGallery::collect(null, 16);
+        }
+
+        $featuredPosts = collect();
+        if (setting('home_show_featured', true)) {
+            $featuredPosts = Post::query()
+                ->published()
+                ->postsOnly()
+                ->where('featured', true)
+                ->where('exclude_homepage', false)
+                ->whereHas('tags', fn ($q) => $q->where('slug', 'post'))
+                ->with(['author', 'tags'])
+                ->orderByDesc('published_at')
+                ->limit(4)
+                ->get();
+        }
+
         return view('site.home', compact(
             'projects',
             'tags',
             'historyPosts',
             'pages',
             'slides',
-            'videoPosts'
+            'videoPosts',
+            'featuredPosts',
+            'eventGallery'
         ));
     }
 }

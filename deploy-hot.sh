@@ -152,7 +152,18 @@ if (! preg_match('/AddHandler application\/x-httpd-ea-php84 \.php84/', $ht)) {
         ."<FilesMatch \"\\.php84$\">\n"
         ."  SetHandler application/x-httpd-ea-php84\n"
         ."</FilesMatch>\n"
-        ."DirectoryIndex index.php84 index.php\n\n".$ht;
+        ."DirectoryIndex index.php84 index.php index.html index.htm\n\n".$ht;
+}
+// Static addon dirs (ilovefs sharepic, etc.) only have index.html
+if (preg_match('/^DirectoryIndex\s+/m', $ht)) {
+    $ht = preg_replace(
+        '/^DirectoryIndex[^\n]*$/m',
+        'DirectoryIndex index.php84 index.php index.html index.htm',
+        $ht,
+        1
+    ) ?? $ht;
+} else {
+    $ht = "DirectoryIndex index.php84 index.php index.html index.htm\n".$ht;
 }
 $ht = str_replace('RewriteRule ^ index.php [L]', 'RewriteRule ^ index.php84 [L]', $ht);
 if (strpos($ht, 'RewriteRule ^ index.php84 [L]') === false && strpos($ht, 'Front controller') !== false) {
@@ -234,6 +245,31 @@ try {
         $ucols = $pdo->query("PRAGMA table_info(users)")->fetchAll(PDO::FETCH_ASSOC);
         $userCols = array_column($ucols, 'name');
         if (!in_array('role', $userCols, true)) { $pdo->exec("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'admin'"); echo "users.role\n"; }
+        if (!in_array('author_id', $userCols, true)) { $pdo->exec("ALTER TABLE users ADD COLUMN author_id INTEGER NULL"); echo "users.author_id\n"; }
+        if (!in_array('must_change_password', $userCols, true)) {
+            $pdo->exec("ALTER TABLE users ADD COLUMN must_change_password INTEGER NOT NULL DEFAULT 0");
+            echo "users.must_change_password\n";
+        }
+        $nForce = $pdo->exec("UPDATE users SET must_change_password=1 WHERE email='writer@sudoshz.ir'");
+        if ($nForce) { echo "writer must_change_password on\n"; }
+        $nRole = $pdo->exec("UPDATE users SET role='writer' WHERE role IN ('editor','author')");
+        if ($nRole) { echo "users.role editor/author -> writer ($nRole)\n"; }
+        $pcols = array_column($pdo->query("PRAGMA table_info(posts)")->fetchAll(PDO::FETCH_ASSOC), 'name');
+        if (!in_array('user_id', $pcols, true)) { $pdo->exec("ALTER TABLE posts ADD COLUMN user_id INTEGER NULL"); echo "posts.user_id\n"; }
+        $pdo->exec('CREATE INDEX IF NOT EXISTS posts_user_id_index ON posts(user_id)');
+        $pdo->exec('CREATE INDEX IF NOT EXISTS users_author_id_index ON users(author_id)');
+        $commentCols = array_column($pdo->query('PRAGMA table_info(comments)')->fetchAll(PDO::FETCH_ASSOC), 'name');
+        if ($commentCols) {
+            if (! in_array('is_staff', $commentCols, true)) {
+                $pdo->exec('ALTER TABLE comments ADD COLUMN is_staff INTEGER NOT NULL DEFAULT 0');
+                echo "comments.is_staff\n";
+            }
+            if (! in_array('user_id', $commentCols, true)) {
+                $pdo->exec('ALTER TABLE comments ADD COLUMN user_id INTEGER NULL');
+                echo "comments.user_id\n";
+            }
+            $pdo->exec('CREATE INDEX IF NOT EXISTS comments_user_id_index ON comments(user_id)');
+        }
         $pdo->exec('CREATE TABLE IF NOT EXISTS redirects (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             from_path TEXT NOT NULL UNIQUE,
@@ -253,6 +289,59 @@ try {
             status TEXT NULL,
             created_at TEXT NULL,
             updated_at TEXT NULL
+        )');
+        $pdo->exec('CREATE TABLE IF NOT EXISTS crew_members (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            author_id INTEGER NULL,
+            name TEXT NOT NULL,
+            slug TEXT NOT NULL UNIQUE,
+            role TEXT NULL,
+            bio TEXT NULL,
+            photo TEXT NULL,
+            website TEXT NULL,
+            telegram TEXT NULL,
+            mastodon TEXT NULL,
+            sort INTEGER NOT NULL DEFAULT 0,
+            active INTEGER NOT NULL DEFAULT 1,
+            former INTEGER NOT NULL DEFAULT 0,
+            tenure TEXT NULL,
+            created_at TEXT NULL,
+            updated_at TEXT NULL
+        )');
+        $crewCols = array_column($pdo->query('PRAGMA table_info(crew_members)')->fetchAll(PDO::FETCH_ASSOC), 'name');
+        if (! in_array('former', $crewCols, true)) {
+            $pdo->exec('ALTER TABLE crew_members ADD COLUMN former INTEGER NOT NULL DEFAULT 0');
+            echo "crew_members.former\n";
+        }
+        if (! in_array('tenure', $crewCols, true)) {
+            $pdo->exec('ALTER TABLE crew_members ADD COLUMN tenure TEXT NULL');
+            echo "crew_members.tenure\n";
+        }
+        $pdo->exec('CREATE TABLE IF NOT EXISTS post_crew (
+            post_id INTEGER NOT NULL,
+            crew_member_id INTEGER NOT NULL,
+            sort INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY (post_id, crew_member_id)
+        )');
+        $pdo->exec('CREATE TABLE IF NOT EXISTS event_staff (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            post_id INTEGER NOT NULL,
+            crew_member_id INTEGER NULL,
+            name TEXT NOT NULL,
+            role TEXT NULL,
+            photo TEXT NULL,
+            sort INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NULL,
+            updated_at TEXT NULL
+        )');
+        $pdo->exec('CREATE INDEX IF NOT EXISTS event_staff_post_id_index ON event_staff(post_id)');
+        $pdo->exec('CREATE TABLE IF NOT EXISTS post_contributors (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            post_id INTEGER NOT NULL,
+            author_id INTEGER NOT NULL,
+            role TEXT NOT NULL DEFAULT \'writer\',
+            sort INTEGER NOT NULL DEFAULT 0,
+            UNIQUE(post_id, author_id, role)
         )');
         $pdo->exec('CREATE TABLE IF NOT EXISTS activity_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,

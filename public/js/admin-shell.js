@@ -76,41 +76,12 @@
   function syncSidebarFrom(doc) {
     var newSide = doc.getElementById(SIDE_ID);
     if (!newSide) return;
-
-    // Update active classes by matching href (preserve DOM nodes)
-    var classByHref = {};
-    newSide.querySelectorAll('a[href]').forEach(function (a) {
-      classByHref[a.href] = a.getAttribute('class') || '';
-    });
-    side.querySelectorAll('a[href]').forEach(function (a) {
-      if (Object.prototype.hasOwnProperty.call(classByHref, a.href)) {
-        a.setAttribute('class', classByHref[a.href]);
-      } else {
-        a.classList.remove('is-active', 'active');
-      }
-    });
-
-    // Only client-fallback if server markup had no active item
+    var y = side.scrollTop;
+    side.innerHTML = newSide.innerHTML;
+    side.scrollTop = y;
     if (!side.querySelector('a.is-active, a.active')) {
       markActiveByUrl(location.href);
     }
-
-    // CSRF on logout form
-    var nt = newSide.querySelector('input[name="_token"]');
-    var ot = side.querySelector('input[name="_token"]');
-    if (nt && ot) ot.value = nt.value;
-
-    // Any other hidden fields inside side forms
-    newSide.querySelectorAll('form').forEach(function (nf, i) {
-      var of = side.querySelectorAll('form')[i];
-      if (!of) return;
-      nf.querySelectorAll('input[type="hidden"]').forEach(function (inp) {
-        var name = inp.getAttribute('name');
-        if (!name) return;
-        var target = of.querySelector('input[type="hidden"][name="' + name + '"]');
-        if (target) target.value = inp.value;
-      });
-    });
   }
 
   function markActiveByUrl(urlStr) {

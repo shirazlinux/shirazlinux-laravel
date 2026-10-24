@@ -33,9 +33,11 @@
       @foreach([
         'home_show_slider' => ['اسلایدر','اسلایدهای بالای صفحه'],
         'home_show_edu' => ['آموزش نرم‌افزار آزاد','چهار آزادی'],
+        'home_show_featured' => ['برگزیده','پست‌های ستاره‌دار روی خانه'],
         'home_show_history' => ['تاریخچه','کارت‌های تاریخ جنبش'],
         'home_show_projects' => ['پروژه‌ها','پروژه‌های لانچ‌شده'],
         'home_show_videos' => ['ویدیوها','بخش ویدیو'],
+        'home_show_event_gallery' => ['گالری نشست‌ها','عکس‌های داخل پست رویداد'],
       ] as $key => [$t,$d])
         <label class="rail-toggle settings-toggle">
           <input type="checkbox" name="{{ $key }}" value="1" @checked(old($key, $settings[$key] ?? true))>

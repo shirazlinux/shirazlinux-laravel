@@ -117,6 +117,9 @@ h1{
   font:inherit;font-size:.95rem;
   background:#fafaf9;
   color:var(--text);
+  direction:ltr;
+  text-align:left;
+  unicode-bidi:isolate;
   transition:border-color .15s, box-shadow .15s, background .15s;
 }
 .field input:hover{border-color:#d6d3d1;background:#fff}
@@ -148,10 +151,10 @@ h1{
 }
 .remember-ui::after{
   content:"";
-  width:9px;height:5px;
-  border-inline-start:2px solid #fff;
-  border-bottom:2px solid #fff;
-  transform:rotate(-45deg) translateY(-1px);
+  width:5px;height:9px;
+  border:solid #fff;
+  border-width:0 2px 2px 0;
+  transform:rotate(45deg) translate(-1px,-1px);
   opacity:0;
 }
 .remember input:checked + .remember-ui{
@@ -226,14 +229,14 @@ h1{
       @csrf
       <div class="field">
         <label for="email">ایمیل</label>
-        <input id="email" type="email" name="email"
+        <input id="email" type="email" name="email" dir="ltr"
                value="{{ old('email') }}"
                placeholder="you@example.com"
                required autofocus autocomplete="username">
       </div>
       <div class="field">
         <label for="password">رمز عبور</label>
-        <input id="password" type="password" name="password"
+        <input id="password" type="password" name="password" dir="ltr"
                placeholder="••••••••"
                required autocomplete="current-password">
       </div>

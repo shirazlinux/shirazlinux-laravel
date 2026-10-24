@@ -14,6 +14,11 @@ class MediaAdminController extends Controller
 {
     public function index(Request $request): View|JsonResponse
     {
+        $wantsJson = $request->expectsJson() || $request->wantsJson();
+        if (! $wantsJson && auth()->user()?->isWriter()) {
+            abort(403, 'این بخش فقط برای مدیر است.');
+        }
+
         $items = MediaStorage::listRecent(120);
         if ($request->expectsJson() || $request->wantsJson()) {
             return response()->json(['ok' => true, 'items' => $items]);
@@ -40,6 +45,7 @@ class MediaAdminController extends Controller
 
     public function destroy(Request $request): JsonResponse|RedirectResponse
     {
+        abort_unless(auth()->user()?->isAdmin(), 403, 'حذف رسانه فقط برای مدیر است.');
         $data = $request->validate(['path' => 'required|string|max:500']);
         $path = ltrim(str_replace('..', '', $data['path']), '/');
         if (! str_starts_with($path, 'media/uploads/')) {

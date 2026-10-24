@@ -3,6 +3,8 @@
   $homeTitle = setting('site_name', 'شیرازلینوکس');
   $homeDesc = setting('seo_default_description', setting('site_description', 'شیرازلینوکس؛ جامعه نرم‌افزار آزاد شیراز — نشست، آموزش و ترویج آزادی کاربران.'));
   $homeOg = setting('seo_og_image') ?: 'media/slider/slide1.jpg';
+  $introTitle = setting('home_intro_title', 'شیرازلینوکس؛ جامعه نرم‌افزار آزاد شیراز');
+  $introText = setting('home_intro_text', "ما یک جامعه هستیم در شیراز؛ دور هم جمع می‌شویم، یاد می‌گیریم و نرم‌افزار آزاد را ترویج می‌کنیم.\nاگر دنبال نشست، آموزش، یا راهی برای شروع با گنو/لینوکس می‌گردی، جای درستی آمده‌ای.");
 @endphp
 @section('title', $homeTitle)
 @section('meta_description', $homeDesc)
@@ -11,16 +13,36 @@
 @section('canonical', url('/'))
 
 @section('content')
+<section class="home-hero" aria-label="{{ $homeTitle }}">
+    <div class="home-hero-bg" aria-hidden="true"></div>
+    <div class="container home-hero-inner">
+        <img class="home-hero-mark"
+             src="{{ asset('media/website/logo.png') }}"
+             alt=""
+             width="200" height="234"
+             decoding="async" fetchpriority="high">
+        <p class="home-hero-brand">{{ $homeTitle }}</p>
+        <h1 class="home-hero-title">{{ $introTitle }}</h1>
+        <p class="home-hero-lead">{!! nl2br(e($introText)) !!}</p>
+        <div class="intro-actions">
+            <a class="btn-brand" href="{{ route('tags.show','event') }}">نشست‌ها</a>
+            <a class="btn-outline" href="{{ url('/what-is-free-software') }}">نرم‌افزار آزاد چیست؟</a>
+            <a class="btn-outline" href="{{ url('/donate') }}">حمایت از جامعه</a>
+        </div>
+    </div>
+</section>
+
 @if(setting('home_show_slider', true) && !empty($slides))
-<section class="home-slider" aria-label="اسلایدر">
-    <div class="slider" id="home-slider" data-interval="4000">
+<section class="home-slider home-slider--secondary" aria-label="گالری تصاویر">
+    <div class="slider" id="home-slider" data-interval="5000">
         @foreach($slides as $i => $slide)
             <div class="slide{{ $i === 0 ? ' is-active' : '' }}" data-index="{{ $i }}">
                 <img src="{{ $slide['image'] }}" alt="{{ $slide['alt'] ?: ($slide['title'] ?: 'تصویر اسلاید شیرازلینوکس') }}" @if($i === 0) fetchpriority="high" @else loading="lazy" @endif>
                 <div class="slide-overlay">
                     <div class="slide-caption">
-                        <span class="slide-kicker">{{ setting('site_name', 'شیرازلینوکس') }}</span>
-                        <h2>{{ $slide['title'] }}</h2>
+                        @if(!empty($slide['title']))
+                            <h2>{{ $slide['title'] }}</h2>
+                        @endif
                         @if(!empty($slide['url']))
                             <a class="slide-btn" href="{{ $slide['url'] }}">بیشتر</a>
                         @endif
@@ -40,17 +62,24 @@
 @endif
 
 <div class="container home-wrap home-page">
-    <section class="intro-band">
-        <h1 class="h1main">{{ setting('home_intro_title', 'شیرازلینوکس؛ جامعه نرم‌افزار آزاد شیراز') }}</h1>
-        <p class="intro-text">{!! nl2br(e(setting('home_intro_text', "ما یک جامعه هستیم در شیراز؛ دور هم جمع می‌شویم، یاد می‌گیریم و نرم‌افزار آزاد را ترویج می‌کنیم.\nاگر دنبال نشست، آموزش، یا راهی برای شروع با گنو/لینوکس می‌گردی، جای درستی آمده‌ای."))) !!}</p>
-        <div class="intro-actions">
-            <a class="btn-brand" href="{{ route('tags.show','event') }}">نشست‌ها</a>
-            <a class="btn-outline" href="{{ route('tags.show','dorehami') }}">دورهمی‌ها</a>
-            <a class="btn-outline" href="{{ url('/what-is-free-software') }}">نرم‌افزار آزاد چیست؟</a>
-            <a class="btn-outline" href="{{ route('tags.show','videos') }}">ویدیوها</a>
-            <a class="btn-outline home-desktop-only" href="{{ url('/donate') }}">حمایت از جامعه</a>
-        </div>
-    </section>
+    @if(setting('home_show_featured', true) && $featuredPosts->isNotEmpty())
+        <section class="content-section section-featured" aria-labelledby="featured-heading">
+            <div class="section-head">
+                <h2 class="section-title" id="featured-heading">برگزیده</h2>
+                <a class="section-more" href="{{ route('tags.show','post') }}">همه</a>
+            </div>
+            <p class="muted section-lead home-desktop-only">
+                پست تازه را بخوان؛ اگر دوست داشتی پخش کن.
+            </p>
+            <div class="grid cards-history home-scroll-row">
+                @foreach($featuredPosts as $i => $post)
+                    <div class="home-scroll-item{{ $i >= 3 ? ' home-desktop-only' : '' }}">
+                        @include('site.partials.card', ['post' => $post, 'compact' => true, 'imageAspect' => 'wide'])
+                    </div>
+                @endforeach
+            </div>
+        </section>
+    @endif
 
     <nav class="home-sitelinks" aria-label="پیوندهای مهم">
         <div class="home-sitelinks-head">
@@ -127,6 +156,16 @@
             @endforeach
         </div>
     </section>
+    @endif
+
+    @if(setting('home_show_event_gallery', true) && !empty($eventGallery))
+        @include('site.partials.event-gallery', [
+            'gallery' => $eventGallery,
+            'galleryTitle' => 'عکس نشست‌ها',
+            'galleryLead' => 'چند قاب از دورهمی‌ها و نشست‌های جامعه.',
+            'galleryMoreUrl' => route('tags.show', 'event'),
+            'galleryHeadingId' => 'home-event-gallery',
+        ])
     @endif
 
     @if(setting('home_show_videos', true) && $videoPosts->isNotEmpty())

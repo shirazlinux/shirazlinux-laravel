@@ -1,12 +1,15 @@
-<article class="comment-item depth-{{ $depth }}" id="comment-{{ $comment->id }}">
+<article class="comment-item depth-{{ $depth }} {{ $comment->isStaff() ? 'is-staff' : '' }}" id="comment-{{ $comment->id }}">
     <header class="comment-meta">
         <strong class="comment-author">
             @if($comment->author_url)
-                <a href="{{ $comment->author_url }}" rel="nofollow noopener ugc" target="_blank">{{ $comment->author_name }}</a>
+                <a href="{{ $comment->author_url }}" rel="{{ $comment->isStaff() ? 'noopener' : 'nofollow noopener ugc' }}" target="_blank">{{ $comment->author_name }}</a>
             @else
                 {{ $comment->author_name }}
             @endif
         </strong>
+        @if($comment->isStaff())
+            <span class="comment-staff">پاسخ تیم</span>
+        @endif
         <time datetime="{{ $comment->created_at?->toIso8601String() }}">
             {{ jdate($comment->created_at, 'Y/m/d H:i') }}
         </time>

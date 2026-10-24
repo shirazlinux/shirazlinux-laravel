@@ -5,6 +5,7 @@
   <h1 style="margin:0">نویسندگان</h1>
   <a class="btn" href="{{ route('admin.authors.create') }}">+ نویسنده جدید</a>
 </div>
+<p class="jdp-hint">این‌ها نام‌های نمایشی روی مطالب سایت هستند و با این صفحه کسی وارد پنل نمی‌شود. اگر می‌خواهید کسی مطلب بنویسد و منتشر کند، از <a href="{{ route('admin.users.index') }}">کاربران و نقش‌ها</a> یک کاربر با نقش نویسنده بسازید.</p>
 <div class="card" style="margin-top:1rem">
 <table>
 <tr><th>نام</th><th>اسلاگ</th><th>مطالب</th><th></th></tr>

@@ -144,6 +144,8 @@ class ImportPubliiCommand extends Command
                 $metaDesc = $core['metaDesc'] ?? null;
             }
 
+            $this->copyPostMedia((int) $row['id'], $mediaPath, $publicMedia);
+
             $body = $this->convertBody((string) ($row['text'] ?? ''), (int) $row['id']);
             $excerpt = Str::limit(trim(preg_replace('/\s+/', ' ', strip_tags($body)) ?? ''), 220);
 
@@ -177,6 +179,14 @@ class ImportPubliiCommand extends Command
                     $tagIds[] = $tid;
                 }
             }
+            if (! $featuredImage) {
+                $first = $this->firstPostImage((int) $row['id'], $publicMedia);
+                if ($first) {
+                    $post->featured_image = $first;
+                    $post->save();
+                }
+            }
+
             $post->tags()->sync($tagIds);
             $count++;
         }
@@ -261,13 +271,47 @@ class ImportPubliiCommand extends Command
 
     private function imageBlock(array $block): string
     {
-        $url = $block['content']['url'] ?? $block['url'] ?? '';
-        $alt = $block['content']['alt'] ?? $block['config']['alt'] ?? '';
-        if (! $url) {
+        $content = is_array($block['content'] ?? null) ? $block['content'] : [];
+        $url = $content['url'] ?? $content['image'] ?? $block['url'] ?? $block['image'] ?? '';
+        $alt = $content['alt'] ?? $block['config']['alt'] ?? '';
+        $caption = $content['caption'] ?? '';
+        if (! is_string($url) || $url === '') {
             return '';
         }
 
-        return '<p class="post-image"><img src="'.e($url).'" alt="'.e($alt).'" loading="lazy"></p>';
+        $img = '<img src="'.e($url).'" alt="'.e((string) $alt).'" loading="lazy">';
+        if (is_string($caption) && $caption !== '') {
+            return '<figure class="post-image">'.$img.'<figcaption>'.e($caption).'</figcaption></figure>';
+        }
+
+        return '<p class="post-image">'.$img.'</p>';
+    }
+
+    private function copyPostMedia(int $postId, string $mediaPath, string $publicMedia): void
+    {
+        $srcDir = rtrim($mediaPath, '/').'/posts/'.$postId;
+        if (! is_dir($srcDir)) {
+            return;
+        }
+        $destDir = $publicMedia.'/posts/'.$postId;
+        File::ensureDirectoryExists($destDir);
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($srcDir, \FilesystemIterator::SKIP_DOTS)
+        );
+        foreach ($iterator as $file) {
+            if (! $file->isFile()) {
+                continue;
+            }
+            $rel = ltrim(str_replace($srcDir, '', $file->getPathname()), '/');
+            $dest = $destDir.'/'.$rel;
+            $dir = dirname($dest);
+            if (! is_dir($dir)) {
+                @mkdir($dir, 0755, true);
+            }
+            if (! is_file($dest) || filesize($dest) !== $file->getSize()) {
+                @copy($file->getPathname(), $dest);
+            }
+        }
     }
 
     private function rewriteDomainMedia(string $html, int $postId): string
@@ -285,8 +329,15 @@ class ImportPubliiCommand extends Command
 
     private function copyFeaturedImage(int $postId, string $url, string $mediaPath, string $publicMedia): ?string
     {
+        $url = trim($url);
+        if ($url === '') {
+            return null;
+        }
         // url often like "cover.jpg" relative to posts/{id}/
         $basename = basename(parse_url($url, PHP_URL_PATH) ?: $url);
+        if ($basename === '' || $basename === '.' || $basename === '/') {
+            return null;
+        }
         $src = rtrim($mediaPath, '/').'/posts/'.$postId.'/'.$basename;
         if (! is_file($src)) {
             // try as path fragment
@@ -307,5 +358,21 @@ class ImportPubliiCommand extends Command
         }
 
         return '/media/posts/'.$postId.'/'.$basename;
+    }
+
+    private function firstPostImage(int $postId, string $publicMedia): ?string
+    {
+        $dir = $publicMedia.'/posts/'.$postId;
+        if (! is_dir($dir)) {
+            return null;
+        }
+        $files = glob($dir.'/*.{jpg,jpeg,png,webp,gif}', GLOB_BRACE) ?: [];
+        $files = array_values(array_filter($files, 'is_file'));
+        if ($files === []) {
+            return null;
+        }
+        sort($files);
+
+        return '/media/posts/'.$postId.'/'.basename($files[0]);
     }
 }

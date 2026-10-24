@@ -63,6 +63,8 @@ class SettingsController extends Controller
                 'home_show_videos' => $request->boolean('home_show_videos'),
                 'home_show_edu' => $request->boolean('home_show_edu'),
                 'home_show_slider' => $request->boolean('home_show_slider'),
+                'home_show_featured' => $request->boolean('home_show_featured'),
+                'home_show_event_gallery' => $request->boolean('home_show_event_gallery'),
                 'comments_enabled' => $request->boolean('comments_enabled'),
             ],
             'social' => $request->validate([

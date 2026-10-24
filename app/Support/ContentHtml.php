@@ -21,6 +21,7 @@ class ContentHtml
         }
 
         $html = self::rewriteMediaUrls($html);
+        $html = self::rewriteVideoEmbeds($html);
         $html = self::rewriteInternalLinks($html);
         $html = self::stripEditorNoise($html);
         $html = self::sanitizeTableInlineStyles($html);
@@ -307,6 +308,75 @@ class ContentHtml
         ) ?? $html;
 
         return $html;
+    }
+
+    /**
+     * Point video players at the self-hosted PeerTube (tube.sudoshz.ir).
+     * Unmapped remote IDs are left as-is so they keep playing until uploaded.
+     */
+    public static function rewriteVideoEmbeds(string $html): string
+    {
+        if ($html === '') {
+            return $html;
+        }
+
+        foreach (self::videoIdMap() as $from => $to) {
+            if ($from !== '' && $from !== $to) {
+                $html = str_replace($from, $to, $html);
+            }
+        }
+
+        $html = preg_replace(
+            '#https?://peertube\.neda1\.paasta\.app#i',
+            'https://tube.sudoshz.ir',
+            $html
+        ) ?? $html;
+
+        $html = preg_replace_callback(
+            '#https?://tubedu\.org(/[^"\'\s<>]*)?#i',
+            function (array $m) {
+                $path = $m[1] ?? '';
+                if ($path !== '' && preg_match('#/(?:videos/embed|videos/watch|video-playlists/embed|w/p|w)/([A-Za-z0-9_-]+)#', $path, $idm)) {
+                    if (isset(self::videoIdMap()[$idm[1]])) {
+                        return 'https://tube.sudoshz.ir'.$path;
+                    }
+                    // ID already rewritten to a local short UUID
+                    foreach (self::videoIdMap() as $local) {
+                        if ($idm[1] === $local) {
+                            return 'https://tube.sudoshz.ir'.$path;
+                        }
+                    }
+                }
+
+                return $m[0];
+            },
+            $html
+        ) ?? $html;
+
+        return $html;
+    }
+
+    /**
+     * tubedu.org short UUID → tube.sudoshz.ir short UUID (videos and playlists).
+     *
+     * @return array<string, string>
+     */
+    public static function videoIdMap(): array
+    {
+        return [
+            // videos
+            'oou2wVtSzw3WEWEzsBA6e3' => '9F7Tz51psrqp8mEq8fzULp', // نگاهی کوتاه به همایش LibrePlanet
+            '9n9tQTAnN8aKUXQG5Grorh' => 'cjAJrsC4pfQVyeYeZ7zqp9', // آزادی کاربر
+            '4dt7DCWwHu8hTSCxKdrntE' => '22dMxGQiZxHTAsgJTkKJEB', // کفش‌ساز
+            '7znhhJ6P3jRWnSczi1qdYb' => '7GC3jjNQgrPRLsXCDxeP3K', // قهرمانان لباس‌پوشیده دانشگاه
+            'uUDHi5RknVdzs1vUd4JDTV' => 'redEu4pnBExzp3EaPQ6wDd', // بازگشت
+            '4gM9pLgJs3mDj15KPWXXwd' => 'fqDpFjH6BUzkpADf2xwoAC', // مبارزه برای تعمیر
+            '2iB1wYoQfGvpDGMN6ETQWN' => 'fVtb6EaSp9crhJkBpV4SUU', // فرار به سوی آزادی
+            'nudTkw32nKN6kjpwkrmoUV' => '5UzAEYSgS4prMoL6e6Q82o', // گفتمان نرم‌افزار آزاد — امین بندعلی
+            // playlists
+            '4KJNKiuEfx1K3TbLrJdZe9' => 'sDftDN4QR16eixMNjYnyVG', // LibrePlanet 2025
+            'grbYD53dCnjjpMPp5C2jux' => '1qXXrc76honajJ8SSAUVha', // روز آزادی نرم‌افزار ۱۴۰۴
+        ];
     }
 
     private static function stripEditorNoise(string $html): string

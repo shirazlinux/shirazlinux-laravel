@@ -92,6 +92,11 @@ class SitemapController extends Controller
             $this->url($lines, url('/tags/'.$t->slug), $lastmod, 'weekly', '0.55', $images);
         }
 
+        $crew = \App\Models\CrewMember::query()->orderBy('slug')->get();
+        foreach ($crew as $c) {
+            $this->url($lines, url('/crew/'.$c->slug), $homeLastmod, 'monthly', '0.45');
+        }
+
         foreach ($authors as $a) {
             if ((int) $a->posts_count < 1) {
                 continue;

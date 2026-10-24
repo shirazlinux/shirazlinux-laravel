@@ -2,11 +2,12 @@
 @section('title', $post->exists ? 'ویرایش' : 'ایجاد')
 @section('content')
 @php
-  $isPage = old('type', $post->type ?? 'post') === 'page';
+  $writerMode = auth()->user()?->isWriter();
+  $isPage = !$writerMode && old('type', $post->type ?? 'post') === 'page';
   $status = old('status', $post->status ?? 'draft');
 @endphp
 
-<form class="composer" method="post" action="{{ $post->exists ? route('admin.posts.update',$post) : route('admin.posts.store') }}">
+<form class="composer" method="post" action="{{ $post->exists ? route('admin.posts.update',$post) : route('admin.posts.store') }}" enctype="multipart/form-data">
 @csrf
 @if($post->exists) @method('PUT') @endif
 
@@ -53,6 +54,34 @@
         <textarea id="post-body" name="body">{{ old('body',$post->body) }}</textarea>
       </div>
     </div>
+
+    @if(($post->type ?? 'post') !== 'page')
+    @php
+      $staffRows = old('event_staff', isset($eventStaff) ? $eventStaff->map(fn ($s) => [
+        'id' => $s->id,
+        'crew_member_id' => $s->crew_member_id,
+        'name' => $s->name,
+        'role' => $s->role,
+        'photo' => $s->photo,
+      ])->all() : []);
+      if ($staffRows === []) { $staffRows = [[]]; }
+    @endphp
+    <div class="composer-paper" style="margin-top:1rem" data-event-staff>
+      <div class="editor-label-row">
+        <label>تیم اجرایی این رویداد</label>
+        <span class="editor-hint">برای همین نشست/همایش؛ اسم، سمت همان برنامه، و عکس. عضو جدید هم می‌توانی بنویسی.</span>
+      </div>
+      <div data-staff-list>
+        @foreach($staffRows as $i => $row)
+          @include('admin.posts.partials.staff-row', ['i' => $i, 'row' => $row, 'crewMembers' => $crewMembers ?? collect()])
+        @endforeach
+      </div>
+      <button type="button" class="btn light" data-staff-add style="margin-top:.6rem">+ نفر جدید</button>
+      <template data-staff-tpl>
+        @include('admin.posts.partials.staff-row', ['i' => '__I__', 'row' => [], 'crewMembers' => $crewMembers ?? collect()])
+      </template>
+    </div>
+    @endif
   </div>
 
   {{-- Right settings rail --}}
@@ -80,6 +109,14 @@
         </div>
       </div>
 
+      @if($writerMode)
+        <input type="hidden" name="type" value="post">
+        <input type="hidden" name="author_id" value="{{ auth()->user()->author_id }}">
+        <div class="rail-field">
+          <label>نویسنده</label>
+          <p class="rail-hint" style="margin:0">{{ auth()->user()->name }}</p>
+        </div>
+      @else
       <div class="rail-field">
         <label for="post-type">نوع</label>
         <div class="rail-seg" data-seg="type">
@@ -102,7 +139,33 @@
             <option value="{{ $a->id }}" @selected((string)old('author_id',$post->author_id)===(string)$a->id)>{{ $a->name }}</option>
           @endforeach
         </select>
+        <p class="rail-hint">نویسنده اصلی مطلب</p>
       </div>
+
+      @php
+        $contribRows = old('contributors', $contributors ?? []);
+        while (count($contribRows) < 3) { $contribRows[] = []; }
+      @endphp
+      <div class="rail-field">
+        <label>نگارش / ترجمه</label>
+        <p class="rail-hint">کسانی که در نوشتن یا برگردان این مطلب دست داشتند.</p>
+        @foreach($contribRows as $ci => $crow)
+          <div style="display:grid;grid-template-columns:1fr 7rem;gap:.3rem;margin:.25rem 0">
+            <select name="contributors[{{ $ci }}][author_id]">
+              <option value="">—</option>
+              @foreach($authors as $a)
+                <option value="{{ $a->id }}" @selected((string)($crow['author_id'] ?? '')===(string)$a->id)>{{ $a->name }}</option>
+              @endforeach
+            </select>
+            <select name="contributors[{{ $ci }}][role]">
+              @foreach(['writer'=>'نگارش','translator'=>'ترجمه','editor'=>'ویرایش'] as $rk=>$rl)
+                <option value="{{ $rk }}" @selected(($crow['role'] ?? 'writer')===$rk)>{{ $rl }}</option>
+              @endforeach
+            </select>
+          </div>
+        @endforeach
+      </div>
+      @endif
 
       <div class="rail-field">
         <label>تاریخ انتشار <small>(شمسی)</small></label>
@@ -115,6 +178,7 @@
         <p class="rail-hint">خالی = هنگام انتشار خودکار</p>
       </div>
 
+      @if(!$writerMode)
       <div class="rail-toggles">
         <label class="rail-toggle">
           <input type="checkbox" name="featured" value="1" @checked(old('featured',(bool)$post->featured))>
@@ -133,6 +197,7 @@
           </span>
         </label>
       </div>
+      @endif
 
       <button class="btn rail-save" type="submit">ذخیره تغییرات</button>
     </section>
@@ -320,9 +385,61 @@
     });
   }
 
+  function bootEventStaff() {
+    var box = document.querySelector('[data-event-staff]');
+    if (!box) return;
+    var list = box.querySelector('[data-staff-list]');
+    var tpl = box.querySelector('[data-staff-tpl]');
+    var add = box.querySelector('[data-staff-add]');
+    function reindex() {
+      list.querySelectorAll('[data-staff-row]').forEach(function (row, i) {
+        row.querySelectorAll('[name]').forEach(function (el) {
+          el.name = el.name.replace(/event_staff\[[^\]]+\]/, 'event_staff[' + i + ']');
+        });
+      });
+    }
+    if (add && tpl) {
+      add.addEventListener('click', function () {
+        var html = tpl.innerHTML.replace(/__I__/g, String(list.children.length));
+        var wrap = document.createElement('div');
+        wrap.innerHTML = html.trim();
+        list.appendChild(wrap.firstElementChild);
+        reindex();
+      });
+    }
+    list.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-staff-remove]');
+      if (!btn) return;
+      var row = btn.closest('[data-staff-row]');
+      if (row) row.remove();
+      if (!list.querySelector('[data-staff-row]')) add.click();
+      reindex();
+    });
+    list.addEventListener('change', function (e) {
+      var sel = e.target.closest('[data-staff-roster]');
+      if (sel) {
+        var opt = sel.options[sel.selectedIndex];
+        var row = sel.closest('[data-staff-row]');
+        var name = row.querySelector('[data-staff-name]');
+        if (opt && opt.value && name && !name.value) {
+          name.value = opt.getAttribute('data-name') || '';
+        }
+      }
+      var file = e.target.closest('[data-staff-file]');
+      if (file && file.files && file.files[0]) {
+        var row = file.closest('[data-staff-row]');
+        var prev = row.querySelector('[data-staff-prev]');
+        var url = URL.createObjectURL(file.files[0]);
+        prev.hidden = false;
+        prev.innerHTML = '<img src="'+url+'" alt="" style="width:40px;height:40px;object-fit:cover;border-radius:8px">';
+      }
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('[data-tag-picker]').forEach(bootTagPicker);
     bootSegLabels();
+    bootEventStaff();
   });
 })();
 </script>

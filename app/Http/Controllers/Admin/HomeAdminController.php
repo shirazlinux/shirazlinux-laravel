@@ -32,9 +32,11 @@ class HomeAdminController extends Controller
             'home_intro_text' => 'nullable|string|max:2000',
             'home_show_slider' => 'sometimes|boolean',
             'home_show_edu' => 'sometimes|boolean',
+            'home_show_featured' => 'sometimes|boolean',
             'home_show_history' => 'sometimes|boolean',
             'home_show_projects' => 'sometimes|boolean',
             'home_show_videos' => 'sometimes|boolean',
+            'home_show_event_gallery' => 'sometimes|boolean',
             'slides' => 'nullable|array|max:12',
             'slides.*.title' => 'nullable|string|max:160',
             'slides.*.alt' => 'nullable|string|max:200',
@@ -74,9 +76,11 @@ class HomeAdminController extends Controller
             'home_intro_text' => trim((string) ($data['home_intro_text'] ?? '')),
             'home_show_slider' => $request->boolean('home_show_slider'),
             'home_show_edu' => $request->boolean('home_show_edu'),
+            'home_show_featured' => $request->boolean('home_show_featured'),
             'home_show_history' => $request->boolean('home_show_history'),
             'home_show_projects' => $request->boolean('home_show_projects'),
             'home_show_videos' => $request->boolean('home_show_videos'),
+            'home_show_event_gallery' => $request->boolean('home_show_event_gallery'),
             'home_slider' => $normalized,
         ]);
 

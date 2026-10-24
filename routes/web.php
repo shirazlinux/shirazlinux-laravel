@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\AuthorAdminController;
 use App\Http\Controllers\Admin\BackupAdminController;
 use App\Http\Controllers\Admin\CommentAdminController;
+use App\Http\Controllers\Admin\CrewAdminController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\HomeAdminController;
 use App\Http\Controllers\Admin\MediaAdminController;
@@ -18,6 +19,7 @@ use App\Http\Controllers\Admin\UserAdminController;
 use App\Http\Controllers\Site\AnalyticsCollectController;
 use App\Http\Controllers\Site\AuthorController;
 use App\Http\Controllers\Site\CommentController;
+use App\Http\Controllers\Site\CrewController;
 use App\Http\Controllers\Site\FeedController;
 use App\Http\Controllers\Site\HomeController;
 use App\Http\Controllers\Site\PageController;
@@ -38,6 +40,7 @@ Route::get('/tags', [TagController::class, 'index'])->name('tags.index');
 Route::get('/tags/{slug}', [TagController::class, 'show'])->name('tags.show');
 Route::get('/authors', [AuthorController::class, 'index'])->name('authors.index');
 Route::get('/authors/{slug}', [AuthorController::class, 'show'])->name('authors.show');
+Route::get('/crew/{slug}', [CrewController::class, 'show'])->name('crew.show');
 Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 Route::get('/feed.xml', FeedController::class)->name('feed');
 Route::get('/rss.xml', FeedController::class)->name('rss');
@@ -116,8 +119,8 @@ Route::get('/site.webmanifest', function () {
         'description' => setting('site_description', ''),
         'start_url' => '/',
         'display' => 'standalone',
-        'background_color' => '#f4f1ec',
-        'theme_color' => '#F1592D',
+        'background_color' => '#0f1419',
+        'theme_color' => '#0f1419',
         'lang' => 'fa',
         'dir' => 'rtl',
         'icons' => [
@@ -157,37 +160,45 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::post('login', [AuthController::class, 'login'])->name('login.submit');
     Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 
-    Route::middleware('auth')->group(function () {
+    Route::middleware(['auth', 'panel'])->group(function () {
+        Route::get('password', [AuthController::class, 'showPassword'])->name('password.edit');
+        Route::post('password', [AuthController::class, 'updatePassword'])->name('password.update');
         Route::get('/', DashboardController::class)->name('dashboard');
-        Route::get('stats', StatsController::class)->name('stats');
-        Route::get('settings', [SettingsController::class, 'edit'])->name('settings.edit');
-        Route::post('settings', [SettingsController::class, 'update'])->name('settings.update');
-        Route::get('home', [HomeAdminController::class, 'edit'])->name('home.edit');
-        Route::post('home', [HomeAdminController::class, 'update'])->name('home.update');
-        Route::get('menu', [MenuAdminController::class, 'edit'])->name('menu.edit');
-        Route::post('menu', [MenuAdminController::class, 'update'])->name('menu.update');
-        Route::post('menu/reset', [MenuAdminController::class, 'reset'])->name('menu.reset');
-        Route::get('redirects', [RedirectAdminController::class, 'index'])->name('redirects.index');
-        Route::post('redirects', [RedirectAdminController::class, 'store'])->name('redirects.store');
-        Route::delete('redirects/{redirect}', [RedirectAdminController::class, 'destroy'])->name('redirects.destroy');
         Route::get('media', [MediaAdminController::class, 'index'])->name('media.index');
         Route::post('media', [MediaAdminController::class, 'store'])->name('media.store');
-        Route::delete('media', [MediaAdminController::class, 'destroy'])->name('media.destroy');
-        Route::get('users', [UserAdminController::class, 'index'])->name('users.index');
-        Route::post('users', [UserAdminController::class, 'store'])->name('users.store');
-        Route::put('users/{user}', [UserAdminController::class, 'update'])->name('users.update');
-        Route::delete('users/{user}', [UserAdminController::class, 'destroy'])->name('users.destroy');
-        Route::get('activity', [ActivityLogController::class, 'index'])->name('activity.index');
-        Route::get('backup', [BackupAdminController::class, 'index'])->name('backup.index');
-        Route::get('backup/export', [BackupAdminController::class, 'export'])->name('backup.export');
-        Route::get('backup/sqlite', [BackupAdminController::class, 'downloadSqlite'])->name('backup.sqlite');
         Route::post('posts/bulk', [PostAdminController::class, 'bulk'])->name('posts.bulk');
         Route::resource('posts', PostAdminController::class)->except(['show']);
-        Route::resource('tags', TagAdminController::class)->except(['show']);
-        Route::resource('authors', AuthorAdminController::class)->except(['show']);
-        Route::get('comments', [CommentAdminController::class, 'index'])->name('comments.index');
-        Route::patch('comments/{comment}/status', [CommentAdminController::class, 'updateStatus'])->name('comments.status');
-        Route::delete('comments/{comment}', [CommentAdminController::class, 'destroy'])->name('comments.destroy');
+
+        Route::middleware('admin')->group(function () {
+            Route::get('stats', StatsController::class)->name('stats');
+            Route::get('settings', [SettingsController::class, 'edit'])->name('settings.edit');
+            Route::post('settings', [SettingsController::class, 'update'])->name('settings.update');
+            Route::get('home', [HomeAdminController::class, 'edit'])->name('home.edit');
+            Route::post('home', [HomeAdminController::class, 'update'])->name('home.update');
+            Route::get('menu', [MenuAdminController::class, 'edit'])->name('menu.edit');
+            Route::post('menu', [MenuAdminController::class, 'update'])->name('menu.update');
+            Route::post('menu/reset', [MenuAdminController::class, 'reset'])->name('menu.reset');
+            Route::get('redirects', [RedirectAdminController::class, 'index'])->name('redirects.index');
+            Route::post('redirects', [RedirectAdminController::class, 'store'])->name('redirects.store');
+            Route::delete('redirects/{redirect}', [RedirectAdminController::class, 'destroy'])->name('redirects.destroy');
+            Route::delete('media', [MediaAdminController::class, 'destroy'])->name('media.destroy');
+            Route::get('users', [UserAdminController::class, 'index'])->name('users.index');
+            Route::post('users', [UserAdminController::class, 'store'])->name('users.store');
+            Route::put('users/{user}', [UserAdminController::class, 'update'])->name('users.update');
+            Route::delete('users/{user}', [UserAdminController::class, 'destroy'])->name('users.destroy');
+            Route::get('activity', [ActivityLogController::class, 'index'])->name('activity.index');
+            Route::get('backup', [BackupAdminController::class, 'index'])->name('backup.index');
+            Route::get('backup/export', [BackupAdminController::class, 'export'])->name('backup.export');
+            Route::get('backup/sqlite', [BackupAdminController::class, 'downloadSqlite'])->name('backup.sqlite');
+            Route::resource('tags', TagAdminController::class)->except(['show']);
+            Route::resource('authors', AuthorAdminController::class)->except(['show']);
+            Route::post('crew/intro', [CrewAdminController::class, 'updateIntro'])->name('crew.intro');
+            Route::resource('crew', CrewAdminController::class)->except(['show']);
+            Route::get('comments', [CommentAdminController::class, 'index'])->name('comments.index');
+            Route::patch('comments/{comment}/status', [CommentAdminController::class, 'updateStatus'])->name('comments.status');
+            Route::post('comments/{comment}/reply', [CommentAdminController::class, 'reply'])->name('comments.reply');
+            Route::delete('comments/{comment}', [CommentAdminController::class, 'destroy'])->name('comments.destroy');
+        });
     });
 });
 
@@ -205,5 +216,5 @@ Route::get('/{slug}', function (string $slug) {
     }
 
     return app(PostController::class)->show($slug);
-})->where('slug', '^(?!tags$|authors$|search$|admin$|media$|css$|js$|microsites$|ada$|ada-zangeman$|free-software-history$|deltachat-list$|sitemap\.xml$|feed\.xml$|rss\.xml$|feed$|up$|preview$|robots\.txt$|llms\.txt$|humans\.txt$|site\.webmanifest$|analytics$).+')
+})->where('slug', '^(?!tags$|authors$|crew$|executive-team$|search$|admin$|media$|css$|js$|microsites$|ada$|ada-zangeman$|free-software-history$|deltachat-list$|sitemap\.xml$|feed\.xml$|rss\.xml$|feed$|up$|preview$|robots\.txt$|llms\.txt$|humans\.txt$|site\.webmanifest$|analytics$).+')
   ->name('content.show');

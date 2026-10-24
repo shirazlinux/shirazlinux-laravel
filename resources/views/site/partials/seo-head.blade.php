@@ -4,8 +4,8 @@
   $siteName = setting('site_name', 'شیرازلینوکس');
   $titleSuffix = setting('seo_title_suffix', 'جامعه نرم‌افزار آزاد');
   $pageTitle = trim($__env->yieldContent('title', $siteName));
-  // Strip zero-width / BOM junk that sometimes sneaks into imported titles
-  $pageTitle = preg_replace('/[\x{200B}-\x{200D}\x{FEFF}]/u', '', $pageTitle) ?? $pageTitle;
+  // Strip ZWSP, ZWJ and BOM. Keep ZWNJ (U+200C) so Persian nim-fasele stays in og:title.
+  $pageTitle = preg_replace('/[\x{200B}\x{200D}\x{FEFF}]/u', '', $pageTitle) ?? $pageTitle;
   $pageTitle = trim($pageTitle);
   // Home / site-name titles: avoid "خانه | …" redundancy
   if (in_array($pageTitle, ['خانه', 'Home', $siteName], true)) {
@@ -40,6 +40,10 @@
   $ogType = trim($__env->yieldContent('og_type', setting('seo_og_type_default', 'website')));
   $twitter = ltrim((string) setting('seo_twitter', ''), '@');
   $keywords = setting('seo_keywords', '');
+  $pageKeywords = trim($__env->yieldContent('keywords', ''));
+  if ($pageKeywords !== '') {
+      $keywords = $keywords ? $pageKeywords.'، '.$keywords : $pageKeywords;
+  }
   $orgName = setting('seo_organization_name', $siteName);
   $orgLogo = setting('seo_organization_logo', 'media/website/logo.png');
   $orgLogoUrl = Seo::absolute($orgLogo);

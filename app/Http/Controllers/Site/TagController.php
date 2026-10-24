@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Site;
 
 use App\Http\Controllers\Controller;
 use App\Models\Tag;
+use App\Support\EventGallery;
 use Illuminate\View\View;
 
 class TagController extends Controller
@@ -29,6 +30,10 @@ class TagController extends Controller
             ->orderByDesc('published_at')
             ->paginate(12);
 
-        return view('site.tag', compact('tag', 'posts'));
+        $gallery = $tag->isEventLike()
+            ? EventGallery::collect($tag, 60)
+            : [];
+
+        return view('site.tag', compact('tag', 'posts', 'gallery'));
     }
 }

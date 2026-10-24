@@ -14,7 +14,7 @@ class PostController extends Controller
             ->published()
             ->postsOnly()
             ->where('slug', $slug)
-            ->with(['author', 'tags', 'approvedComments.approvedChildren'])
+            ->with(['author', 'tags', 'contributors.author', 'eventStaff.crewMember', 'approvedComments.approvedChildren'])
             ->firstOrFail();
 
         $related = Post::query()

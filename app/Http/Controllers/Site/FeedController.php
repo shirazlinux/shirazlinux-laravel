@@ -44,7 +44,7 @@ class FeedController extends Controller
 
         foreach ($posts as $post) {
             $link = url('/'.$post->slug);
-            $title = trim(preg_replace('/[\x{200B}-\x{200D}\x{FEFF}]/u', '', (string) ($post->title ?: $post->slug)) ?? '');
+            $title = trim(preg_replace('/[\x{200B}\x{200D}\x{FEFF}]/u', '', (string) ($post->title ?: $post->slug)) ?? '');
             $desc = Seo::description($post->excerpt ?: strip_tags((string) $post->body), 320);
             $pub = optional($post->published_at)->toRfc2822String() ?: now()->toRfc2822String();
             $author = $post->author?->name;

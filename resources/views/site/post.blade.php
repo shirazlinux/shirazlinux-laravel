@@ -15,6 +15,7 @@
 @endphp
 @section('title', $post->meta_title ?: $post->title)
 @section('meta_description', $postDesc)
+@section('keywords', $post->tags->pluck('name')->filter()->implode('، '))
 @section('og_type', 'article')
 @section('og_image', $postOg)
 @section('robots', (!empty($isPreview) || ($post->status ?? 'published') !== 'published') ? 'noindex,nofollow' : '')
@@ -32,6 +33,11 @@
 @foreach($post->tags as $tag)
 <meta property="article:tag" content="{{ $tag->name }}">
 @endforeach
+@foreach(($post->contributors ?? collect()) as $c)
+@if($c->author)
+<meta property="article:author" content="{{ route('authors.show', $c->author->slug) }}">
+@endif
+@endforeach
 @if(setting('seo_jsonld_enabled', true))
 @php
   $articleLd = array_filter([
@@ -40,14 +46,21 @@
     'headline' => $post->title,
     'datePublished' => optional($post->published_at)?->toIso8601String(),
     'dateModified' => optional($post->updated_at)?->toIso8601String(),
-    'author' => $post->author ? [
-      '@type' => 'Person',
-      'name' => $post->author->name,
-      'url' => route('authors.show', $post->author->slug),
-    ] : [
-      '@type' => 'Organization',
-      'name' => setting('seo_organization_name', setting('site_name', 'شیرازلینوکس')),
-    ],
+    'author' => ($post->relationLoaded('contributors') && $post->contributors->isNotEmpty())
+      ? $post->contributors->map(fn ($c) => array_filter([
+          '@type' => 'Person',
+          'name' => $c->author?->name,
+          'url' => $c->author ? route('authors.show', $c->author->slug) : null,
+          'jobTitle' => $c->roleLabel(),
+        ]))->filter(fn ($a) => ! empty($a['name']))->values()->all()
+      : ($post->author ? [
+          '@type' => 'Person',
+          'name' => $post->author->name,
+          'url' => route('authors.show', $post->author->slug),
+        ] : [
+          '@type' => 'Organization',
+          'name' => setting('seo_organization_name', setting('site_name', 'شیرازلینوکس')),
+        ]),
     'publisher' => [
       '@type' => 'Organization',
       'name' => setting('seo_organization_name', setting('site_name', 'شیرازلینوکس')),
@@ -64,7 +77,9 @@
     'description' => $postDesc,
     'inLanguage' => 'fa-IR',
     'isAccessibleForFree' => true,
-    'articleSection' => $post->tags->first()?->name,
+    'articleSection' => $post->tags->pluck('name')->all() ?: null,
+    'keywords' => $post->tags->pluck('name')->implode('، ') ?: null,
+    'about' => $post->tags->map(fn ($t) => ['@type' => 'Thing', 'name' => $t->name])->values()->all() ?: null,
     'wordCount' => str_word_count(strip_tags((string) $post->body)),
   ], fn ($v) => $v !== null && $v !== '');
   $crumbs = Seo::breadcrumbJsonLd($crumbItems);
@@ -83,8 +98,19 @@
     <article class="article" itemscope itemtype="https://schema.org/BlogPosting">
         <h1 itemprop="headline">{{ $post->title }}</h1>
         <div class="article-meta">
-            @if($post->author)
-                <a href="{{ route('authors.show', $post->author->slug) }}" itemprop="author">{{ $post->author->name }}</a>
+            @if($post->relationLoaded('contributors') && $post->contributors->isNotEmpty())
+                @foreach($post->contributors->groupBy('role') as $role => $rows)
+                    <span class="article-byline">
+                        {{ \App\Models\PostContributor::ROLES[$role] ?? $role }}:
+                        @foreach($rows as $i => $c)
+                            @if($c->author)
+                                <a href="{{ route('authors.show', $c->author->slug) }}" rel="author" itemprop="author">{{ $c->author->name }}</a>@if(! $loop->last)، @endif
+                            @endif
+                        @endforeach
+                    </span>@if(! $loop->last) · @endif
+                @endforeach
+            @elseif($post->author)
+                <a href="{{ route('authors.show', $post->author->slug) }}" rel="author" itemprop="author">{{ $post->author->name }}</a>
             @endif
             @if($post->published_at)
                 · <time datetime="{{ $post->published_at->toIso8601String() }}" itemprop="datePublished">{{ jdate($post->published_at) }}</time>
@@ -107,6 +133,14 @@
                 <a class="badge" rel="tag" href="{{ route('tags.show', $tag->slug) }}">{{ $tag->name }}</a>
             @endforeach
         </div>
+        @if($post->relationLoaded('eventStaff') && $post->eventStaff->isNotEmpty())
+            @include('site.partials.crew-cards', [
+                'crew' => $post->eventStaff,
+                'crewTitle' => 'تیم اجرایی این رویداد',
+                'crewLead' => 'کسانی که در برگزاری این برنامه نقش داشتند.',
+                'crewHeadingId' => 'post-crew',
+            ])
+        @endif
     </article>
 
     @if($related->isNotEmpty())

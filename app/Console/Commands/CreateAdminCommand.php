@@ -15,6 +15,7 @@ class CreateAdminCommand extends Command
             [
                 'name' => $this->option('name'),
                 'password' => Hash::make($this->argument('password')),
+                'role' => User::ROLE_ADMIN,
             ]
         );
         $this->info("Admin ready: {$user->email}");

@@ -26,17 +26,25 @@ class UserAdminController extends Controller
             'name' => 'required|string|max:120',
             'email' => 'required|email|max:190|unique:users,email',
             'password' => 'required|string|min:8|max:120',
-            'role' => 'required|in:admin,editor',
+            'role' => 'required|in:admin,writer',
         ]);
-        User::query()->create([
+        $user = User::query()->create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'role' => $data['role'],
+            'must_change_password' => true,
         ]);
-        ActivityLog::record('user.create', null, 'ایجاد کاربر '.$data['email']);
+        if ($user->isWriter()) {
+            $user->ensureAuthor();
+        }
+        ActivityLog::record('user.create', $user, 'ایجاد کاربر '.$data['email']);
 
-        return back()->with('ok', 'کاربر ایجاد شد.');
+        $msg = $user->isWriter()
+            ? 'کاربر نویسنده ساخته شد. از حساب مدیر خارج شوید و با ایمیل و رمز همین کاربر وارد شوید. بار اول باید رمز را عوض کند.'
+            : 'کاربر ایجاد شد.';
+
+        return back()->with('ok', $msg);
     }
 
     public function update(Request $request, User $user): RedirectResponse
@@ -45,16 +53,25 @@ class UserAdminController extends Controller
             'name' => 'required|string|max:120',
             'email' => ['required', 'email', 'max:190', Rule::unique('users', 'email')->ignore($user->id)],
             'password' => 'nullable|string|min:8|max:120',
-            'role' => 'required|in:admin,editor',
+            'role' => 'required|in:admin,writer',
         ]);
+        if ($user->isAdmin() && $data['role'] !== User::ROLE_ADMIN && $this->adminCount() <= 1) {
+            return back()->withErrors(['role' => 'حداقل یک مدیر باید بماند.']);
+        }
         $user->name = $data['name'];
         $user->email = $data['email'];
         $user->role = $data['role'];
         if (! empty($data['password'])) {
             $user->password = Hash::make($data['password']);
+            if ($user->id !== auth()->id()) {
+                $user->must_change_password = true;
+            }
         }
         $user->save();
-        ActivityLog::record('user.update', null, 'ویرایش کاربر '.$user->email);
+        if ($user->isWriter()) {
+            $user->ensureAuthor();
+        }
+        ActivityLog::record('user.update', $user, 'ویرایش کاربر '.$user->email);
 
         return back()->with('ok', 'کاربر به‌روز شد.');
     }
@@ -64,6 +81,9 @@ class UserAdminController extends Controller
         if ($user->id === auth()->id()) {
             return back()->withErrors(['user' => 'نمی‌توانید خودتان را حذف کنید.']);
         }
+        if ($user->isAdmin() && $this->adminCount() <= 1) {
+            return back()->withErrors(['user' => 'حداقل یک مدیر باید بماند.']);
+        }
         if (User::query()->count() <= 1) {
             return back()->withErrors(['user' => 'حداقل یک کاربر باید بماند.']);
         }
@@ -72,5 +92,14 @@ class UserAdminController extends Controller
         ActivityLog::record('user.delete', null, 'حذف کاربر '.$email);
 
         return back()->with('ok', 'حذف شد.');
+    }
+
+    private function adminCount(): int
+    {
+        return User::query()
+            ->where(function ($q) {
+                $q->where('role', User::ROLE_ADMIN)->orWhereNull('role');
+            })
+            ->count();
     }
 }

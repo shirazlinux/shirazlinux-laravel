@@ -17,6 +17,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'analytics/collect',
         ]);
+        $middleware->alias([
+            'admin' => \App\Http\Middleware\EnsureAdmin::class,
+            'panel' => \App\Http\Middleware\EnsurePanelUser::class,
+        ]);
         $middleware->appendToGroup('web', [
             \App\Http\Middleware\HandleRedirects::class,
         ]);

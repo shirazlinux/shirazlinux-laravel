@@ -17,13 +17,27 @@ class Comment extends Model
         'author_url',
         'body',
         'status',
+        'is_staff',
+        'user_id',
         'ip',
         'user_agent',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'is_staff' => 'boolean',
+        ];
+    }
+
     public function post(): BelongsTo
     {
         return $this->belongsTo(Post::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function parent(): BelongsTo
@@ -54,5 +68,10 @@ class Comment extends Model
     public function isApproved(): bool
     {
         return $this->status === 'approved';
+    }
+
+    public function isStaff(): bool
+    {
+        return (bool) $this->is_staff;
     }
 }

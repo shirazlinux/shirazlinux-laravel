@@ -171,9 +171,11 @@
         @foreach([
           'home_show_slider' => ['اسلایدر','اسلایدهای بالای خانه'],
           'home_show_edu' => ['آموزش نرم‌افزار آزاد','چهار آزادی و معرفی کوتاه'],
+          'home_show_featured' => ['برگزیده','پست‌های ستاره‌دار روی خانه'],
           'home_show_history' => ['تاریخچه','کارت‌های تاریخ جنبش'],
           'home_show_projects' => ['پروژه‌های لانچ‌شده','شبکهٔ پروژه‌ها'],
           'home_show_videos' => ['ویدیوها','بخش ویدیو در خانه'],
+          'home_show_event_gallery' => ['گالری نشست‌ها','عکس‌های داخل پست رویداد'],
           'comments_enabled' => ['نظرات','فرم نظر زیر مطالب'],
         ] as $key => [$title, $desc])
           <label class="rail-toggle settings-toggle">

@@ -48,6 +48,10 @@ class Settings
             'home_show_videos' => true,
             'home_show_edu' => true,
             'home_show_slider' => true,
+            'home_show_featured' => true,
+            'home_show_event_gallery' => true,
+            'crew_page_title' => 'تیم اجرایی شیرازلینوکس',
+            'crew_page_intro' => "کادر اجرایی شیرازلینوکس داوطلبانه نشست‌ها، دورهمی‌ها، کارگاه‌ها و همایش‌ها را جلو می‌برد.\nاین افراد هماهنگی، اجرا و انتقال تجربه را در جامعه نرم‌افزار آزاد شیراز بر عهده دارند.",
             'comments_enabled' => true,
 
             // Homepage content

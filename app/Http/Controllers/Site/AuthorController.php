@@ -11,10 +11,13 @@ class AuthorController extends Controller
     public function index(): View
     {
         $authors = Author::query()
-            ->withCount(['posts' => fn ($q) => $q->published()->postsOnly()])
+            ->withCount([
+                'posts' => fn ($q) => $q->published()->postsOnly(),
+                'contributions',
+            ])
             ->orderBy('name')
             ->get()
-            ->filter(fn ($a) => $a->posts_count > 0);
+            ->filter(fn ($a) => $a->posts_count > 0 || $a->contributions_count > 0);
 
         return view('site.authors', compact('authors'));
     }
@@ -29,6 +32,15 @@ class AuthorController extends Controller
             ->orderByDesc('published_at')
             ->paginate(12);
 
-        return view('site.author', compact('author', 'posts'));
+        $contributed = $author->contributions()
+            ->with(['post' => fn ($q) => $q->published()->postsOnly()->with('tags')])
+            ->get()
+            ->map(fn ($c) => $c->post)
+            ->filter()
+            ->unique('id')
+            ->reject(fn ($p) => $posts->contains('id', $p->id))
+            ->values();
+
+        return view('site.author', compact('author', 'posts', 'contributed'));
     }
 }

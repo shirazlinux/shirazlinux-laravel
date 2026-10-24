@@ -3,17 +3,25 @@
 @section('content')
 @php $fa = fn ($n) => \App\Support\JalaliDate::toPersianDigits((string) number_format((int) $n)); @endphp
 <h1>داشبورد</h1>
+@if(auth()->user()?->isWriter())
+  <p class="jdp-hint" style="margin-top:0">شما نویسنده هستید. فقط مطالب خودتان را می‌بینید و می‌توانید بسازید یا ویرایش کنید.</p>
+@endif
 <div class="stats" style="margin:1rem 0">
   <div class="stat"><b>{{ $posts }}</b>مطلب</div>
+  @if(auth()->user()?->isAdmin())
   <div class="stat"><b>{{ $pages }}</b>صفحه</div>
+  @endif
   <div class="stat"><b>{{ $published }}</b>منتشرشده</div>
+  @if(auth()->user()?->isAdmin())
   <div class="stat"><b>{{ $tags }}</b>تگ</div>
   <div class="stat"><b>{{ $authors }}</b>نویسنده</div>
   <div class="stat"><b>{{ $comments }}</b>نظر
     @if($comments_pending)<br><small style="color:#c2410c">{{ $comments_pending }} در انتظار</small>@endif
   </div>
+  @endif
 </div>
 
+@if(auth()->user()?->isAdmin())
 <div class="card">
   <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.5rem">
     <h2 style="margin:0">بازدید سایت</h2>
@@ -46,6 +54,7 @@
 @endforeach
 </table>
 </div>
+@endif
 @endif
 
 <div class="card">

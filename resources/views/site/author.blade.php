@@ -1,6 +1,7 @@
 @extends('layouts.site')
-@section('title', $author->name)
-@section('meta_description', \Illuminate\Support\Str::limit(strip_tags((string) $author->bio) ?: $author->name, 160))
+@section('title', $author->name.' | نویسنده شیرازلینوکس')
+@section('meta_description', \Illuminate\Support\Str::limit(strip_tags((string) $author->bio) ?: ($author->name.' — نگارش و ترجمه مطالب جامعه نرم‌افزار آزاد شیراز.'), 160))
+@section('canonical', route('authors.show', $author->slug))
 @if($author->avatar)
 @section('og_image', str_starts_with($author->avatar,'http') ? $author->avatar : asset(ltrim($author->avatar,'/')))
 @endif
@@ -14,6 +15,11 @@
     'description'=>\Illuminate\Support\Str::limit(strip_tags((string)$author->bio), 200),
     'image'=>$author->avatar ? (str_starts_with($author->avatar,'http')?$author->avatar:asset(ltrim($author->avatar,'/'))) : null,
     'sameAs'=>array_values(array_filter([$author->website,$author->telegram,$author->mastodon,$author->github])),
+    'worksFor' => [
+      '@type' => 'Organization',
+      'name' => setting('seo_organization_name', setting('site_name', 'شیرازلینوکس')),
+      'url' => url('/'),
+    ],
   ]);
   $crumbs = [
     '@context'=>'https://schema.org','@type'=>'BreadcrumbList',
@@ -44,8 +50,12 @@
                  style="border-radius:999px;object-fit:cover;border:1px solid var(--border)">
           @endif
           <div>
+            <p class="section-hero-kicker">نگارش و ترجمه</p>
             <h1 style="margin:0 0 .4rem">{{ $author->name }}</h1>
-            @if($author->bio)<p class="muted">{{ $author->bio }}</p>@endif
+            @if($author->bio)<p class="muted">{{ $author->bio }}</p>
+            @else
+              <p class="muted">در نگارش یا ترجمه مطالب شیرازلینوکس نقش داشته است.</p>
+            @endif
             <div style="display:flex;flex-wrap:wrap;gap:.45rem;margin-top:.5rem">
               @foreach([
                 'website'=>'وب','telegram'=>'تلگرام','mastodon'=>'ماس‌تودون','github'=>'گیت'
@@ -58,11 +68,26 @@
           </div>
         </div>
     </section>
-    <div class="grid">
-        @foreach($posts as $post)
-            @include('site.partials.card', ['post' => $post])
-        @endforeach
-    </div>
-    <div class="pagination">{!! $posts->withQueryString()->links() !!}</div>
+    @if($posts->isNotEmpty())
+    <section class="content-section">
+        <div class="section-head"><h2 class="section-title">نوشته‌ها</h2></div>
+        <div class="grid">
+            @foreach($posts as $post)
+                @include('site.partials.card', ['post' => $post])
+            @endforeach
+        </div>
+        <div class="pagination">{!! $posts->withQueryString()->links() !!}</div>
+    </section>
+    @endif
+    @if(isset($contributed) && $contributed->isNotEmpty())
+    <section class="content-section">
+        <div class="section-head"><h2 class="section-title">مشارکت در نگارش یا ترجمه</h2></div>
+        <div class="grid">
+            @foreach($contributed as $post)
+                @include('site.partials.card', ['post' => $post])
+            @endforeach
+        </div>
+    </section>
+    @endif
 </div>
 @endsection

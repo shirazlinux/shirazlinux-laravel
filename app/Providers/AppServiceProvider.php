@@ -2,6 +2,11 @@
 
 namespace App\Providers;
 
+use App\Models\CrewMember;
+use App\Models\Post;
+use App\Policies\PostPolicy;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Pagination\Paginator;
@@ -27,5 +32,7 @@ class AppServiceProvider extends ServiceProvider
         // Custom Persian pagination (no Tailwind/Bootstrap dependency).
         Paginator::defaultView('vendor.pagination.shiraz');
         Paginator::defaultSimpleView('vendor.pagination.simple-shiraz');
+        Route::bind('crew', fn ($value) => CrewMember::query()->findOrFail($value));
+        Gate::policy(Post::class, PostPolicy::class);
     }
 }

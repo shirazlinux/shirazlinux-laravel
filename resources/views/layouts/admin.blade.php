@@ -56,6 +56,9 @@ html{scrollbar-gutter:stable}
   .main{margin-inline-start:0}
 }
 .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem 1.1rem;margin-bottom:1rem}
+.staff-row{border:1px solid var(--border);border-radius:12px;padding:.7rem .8rem;margin:.5rem 0;background:#faf8f5}
+.staff-row-grid{display:grid;grid-template-columns:1.15fr 1fr 1.1fr auto auto;gap:.5rem;align-items:end}
+@media(max-width:960px){.staff-row-grid{grid-template-columns:1fr}}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
 /* ========== Post composer (write + settings rail) ========== */
@@ -627,6 +630,67 @@ textarea.mono{min-height:280px;font-family:ui-monospace,monospace;font-size:.88r
 .umami-metric-bar-cell{width:45%}
 .umami-metric-bar{height:8px;background:linear-gradient(90deg,#fdba74,#F1592D);border-radius:99px;min-width:6px}
 .umami-metric-val{width:3.5rem;text-align:left;font-weight:700;font-variant-numeric:tabular-nums;color:#c2410c}
+.comment-admin-list{display:flex;flex-direction:column;gap:.75rem}
+.comment-admin-card{
+  border:1px solid var(--border);border-radius:14px;padding:.9rem 1rem;
+  background:#fff;
+}
+.comment-admin-card.is-staff{border-color:#fed7aa;background:#fff7ed}
+.comment-admin-meta{
+  display:flex;flex-wrap:wrap;gap:.35rem .85rem;align-items:center;
+  font-size:.85rem;color:#78716c;margin-bottom:.45rem;
+}
+.comment-admin-meta strong{color:#1c1917}
+.comment-admin-body{white-space:pre-wrap;line-height:1.75;margin:0 0 .7rem}
+.comment-admin-actions{display:flex;flex-wrap:wrap;gap:.35rem;align-items:center}
+.comment-admin-actions form{margin:0}
+.comment-admin-reply{
+  margin-top:.8rem;padding-top:.75rem;border-top:1px dashed #e7e0d8;
+}
+.comment-admin-reply label{margin-top:0}
+.comment-admin-reply textarea{min-height:72px;margin:.2rem 0 .55rem}
+.comment-staff-pill{
+  display:inline-block;font-size:.72rem;font-weight:800;color:#fff;
+  background:#F1592D;border-radius:999px;padding:.12rem .5rem;
+}
+.role-guide{
+  display:grid;grid-template-columns:1fr 1fr;gap:.85rem;margin:0 0 1.1rem;
+}
+@media(max-width:700px){.role-guide{grid-template-columns:1fr}}
+.role-guide-card{
+  background:#fff;border:1px solid var(--border);border-radius:16px;
+  padding:1rem 1.1rem;box-shadow:0 6px 18px rgba(40,30,20,.05);
+}
+.role-guide-card h2{margin:0 0 .35rem;font-size:1.05rem}
+.role-guide-card p{margin:0;color:#57534e;line-height:1.7;font-size:.9rem}
+.role-guide-card--writer{border-color:#fed7aa;background:linear-gradient(180deg,#fff,#fff7ed)}
+.role-pick{display:grid;grid-template-columns:1fr 1fr;gap:.55rem}
+@media(max-width:700px){.role-pick{grid-template-columns:1fr}}
+.role-pick-item{margin:0;cursor:pointer}
+.role-pick-item input{position:absolute;opacity:0;pointer-events:none}
+.role-pick-item span{
+  display:block;border:1.5px solid var(--border);border-radius:14px;
+  padding:.7rem .85rem;background:#fafaf9;transition:border-color .15s,background .15s,box-shadow .15s;
+}
+.role-pick-item strong{display:block;font-size:.95rem;color:#1c1917;margin-bottom:.2rem}
+.role-pick-item small{display:block;color:#78716c;font-weight:600;line-height:1.55}
+.role-pick-item:hover span{border-color:#fdba74;background:#fff7ed}
+.role-pick-item input:checked + span{
+  border-color:#F1592D;background:#fff7ed;
+  box-shadow:0 0 0 3px rgba(241,89,45,.12);
+}
+.role-pick-item input:checked + span strong{color:#c2410c}
+.user-card{
+  border:1px solid var(--border);border-radius:16px;padding:.9rem 1rem .7rem;
+  background:#fff;margin:0 0 .75rem;
+}
+.user-card-head{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin-bottom:.65rem}
+.user-role-pill{
+  font-size:.75rem;font-weight:800;border-radius:999px;padding:.15rem .55rem;
+  border:1px solid var(--border);background:#fafaf9;color:#57534e;
+}
+.user-role-pill.is-writer{background:#fff7ed;border-color:#fed7aa;color:#c2410c}
+.user-role-pill.is-admin{background:#ecfdf5;border-color:#6ee7b7;color:#047857}
 </style>
 </head>
 <body>
@@ -647,6 +711,8 @@ textarea.mono{min-height:280px;font-family:ui-monospace,monospace;font-size:.88r
   $navActive = function (string $pattern) {
       return request()->routeIs($pattern) ? 'is-active' : '';
   };
+  $me = auth()->user();
+  $isAdminNav = $me?->isAdmin();
 @endphp
 <div class="layout">
 <aside class="side" id="admin-side" data-turbo-permanent>
@@ -654,29 +720,39 @@ textarea.mono{min-height:280px;font-family:ui-monospace,monospace;font-size:.88r
   <div class="side-group">محتوا</div>
   <a class="{{ $navActive('admin.dashboard') }}" href="{{ route('admin.dashboard') }}">داشبورد</a>
   <a class="{{ $isPostsList ? 'is-active' : '' }}" href="{{ route('admin.posts.index',['type'=>'post']) }}">مطالب</a>
-  <a class="{{ $isPages ? 'is-active' : '' }}" href="{{ route('admin.posts.index',['type'=>'page']) }}">صفحات</a>
+  @if($isAdminNav)
+    <a class="{{ $isPages ? 'is-active' : '' }}" href="{{ route('admin.posts.index',['type'=>'page']) }}">صفحات</a>
+  @endif
   <a class="{{ $isPostCreate ? 'is-active' : '' }}" href="{{ route('admin.posts.create',['type'=>'post']) }}">+ مطلب جدید</a>
-  <a class="{{ $navActive('admin.tags.*') }}" href="{{ route('admin.tags.index') }}">تگ‌ها</a>
-  <a class="{{ $navActive('admin.authors.*') }}" href="{{ route('admin.authors.index') }}">نویسندگان</a>
-  <a class="{{ $navActive('admin.comments.*') }}" href="{{ route('admin.comments.index') }}">نظرات</a>
-  <div class="side-group">سایت</div>
-  <a class="{{ $navActive('admin.home.*') }}" href="{{ route('admin.home.edit') }}">صفحه اصلی و اسلایدر</a>
-  <a class="{{ $navActive('admin.menu.*') }}" href="{{ route('admin.menu.edit') }}">منوی سایت</a>
-  <a class="{{ $navActive('admin.media.*') }}" href="{{ route('admin.media.index') }}">کتابخانه رسانه</a>
-  <a class="{{ $navActive('admin.redirects.*') }}" href="{{ route('admin.redirects.index') }}">ریدایرکت‌ها</a>
-  <a class="{{ $settingsTab === 'general' ? 'is-active' : '' }}" href="{{ route('admin.settings.edit') }}">تنظیمات سایت</a>
-  <a class="{{ $settingsTab === 'seo' ? 'is-active' : '' }}" href="{{ route('admin.settings.edit',['tab'=>'seo']) }}">سئو</a>
-  <a class="{{ $settingsTab === 'display' ? 'is-active' : '' }}" href="{{ route('admin.settings.edit',['tab'=>'display']) }}">حالت نمایشی</a>
-  <a class="{{ $navActive('admin.stats') }}" href="{{ route('admin.stats') }}">آمار بازدید</a>
-  <div class="side-group">سیستم</div>
-  <a class="{{ $navActive('admin.users.*') }}" href="{{ route('admin.users.index') }}">کاربران</a>
-  <a class="{{ $navActive('admin.activity.*') }}" href="{{ route('admin.activity.index') }}">لاگ فعالیت</a>
-  <a class="{{ $navActive('admin.backup.*') }}" href="{{ route('admin.backup.index') }}">پشتیبان</a>
+  @if($isAdminNav)
+    <a class="{{ $navActive('admin.tags.*') }}" href="{{ route('admin.tags.index') }}">تگ‌ها</a>
+    <a class="{{ $navActive('admin.authors.*') }}" href="{{ route('admin.authors.index') }}">نویسندگان</a>
+    <a class="{{ $navActive('admin.crew.*') }}" href="{{ route('admin.crew.index') }}">کادر اجرایی</a>
+    <a class="{{ $navActive('admin.comments.*') }}" href="{{ route('admin.comments.index') }}">نظرات</a>
+    <div class="side-group">سایت</div>
+    <a class="{{ $navActive('admin.home.*') }}" href="{{ route('admin.home.edit') }}">صفحه اصلی و اسلایدر</a>
+    <a class="{{ $navActive('admin.menu.*') }}" href="{{ route('admin.menu.edit') }}">منوی سایت</a>
+    <a class="{{ $navActive('admin.media.*') }}" href="{{ route('admin.media.index') }}">کتابخانه رسانه</a>
+    <a class="{{ $navActive('admin.redirects.*') }}" href="{{ route('admin.redirects.index') }}">ریدایرکت‌ها</a>
+    <a class="{{ $settingsTab === 'general' ? 'is-active' : '' }}" href="{{ route('admin.settings.edit') }}">تنظیمات سایت</a>
+    <a class="{{ $settingsTab === 'seo' ? 'is-active' : '' }}" href="{{ route('admin.settings.edit',['tab'=>'seo']) }}">سئو</a>
+    <a class="{{ $settingsTab === 'display' ? 'is-active' : '' }}" href="{{ route('admin.settings.edit',['tab'=>'display']) }}">حالت نمایشی</a>
+    <a class="{{ $navActive('admin.stats') }}" href="{{ route('admin.stats') }}">آمار بازدید</a>
+    <div class="side-group">سیستم</div>
+    <a class="{{ $navActive('admin.users.*') }}" href="{{ route('admin.users.index') }}">کاربران و نقش‌ها</a>
+    <a class="{{ $navActive('admin.activity.*') }}" href="{{ route('admin.activity.index') }}">لاگ فعالیت</a>
+    <a class="{{ $navActive('admin.backup.*') }}" href="{{ route('admin.backup.index') }}">پشتیبان</a>
+  @endif
   <div class="side-group">پیوندها</div>
   <a href="{{ route('home') }}" target="_blank" rel="noopener">مشاهده سایت</a>
-  <a href="{{ route('sitemap') }}" target="_blank" rel="noopener">sitemap</a>
-  <a href="{{ route('feed') }}" target="_blank" rel="noopener">RSS</a>
-  <form method="post" action="{{ route('admin.logout') }}" style="margin-top:1rem" data-full-page="1">@csrf
+  @if($isAdminNav)
+    <a href="{{ route('sitemap') }}" target="_blank" rel="noopener">sitemap</a>
+    <a href="{{ route('feed') }}" target="_blank" rel="noopener">RSS</a>
+  @endif
+  @if($me)
+    <p style="margin:1rem .35rem .35rem;font-size:.78rem;color:#a8a29e;line-height:1.6">{{ $me->name }}<br>{{ $me->roleLabel() }}</p>
+  @endif
+  <form method="post" action="{{ route('admin.logout') }}" style="margin-top:.4rem" data-full-page="1">@csrf
     <button class="btn gray" type="submit">خروج</button>
   </form>
 </aside>
@@ -687,7 +763,7 @@ textarea.mono{min-height:280px;font-family:ui-monospace,monospace;font-size:.88r
 </div>
 </div>
 <script src="{{ asset('js/admin-jalali.js') }}?v=20260818f" defer></script>
-<script src="{{ asset('js/admin-shell.js') }}?v=20260818a" defer></script>
+<script src="{{ asset('js/admin-shell.js') }}?v=20261005w1" defer></script>
 @stack('scripts')
 </body>
 </html>

@@ -1,6 +1,7 @@
 @extends('layouts.site')
-@section('title', 'نویسندگان')
-@section('meta_description', 'نویسندگان و اعضای جامعه شیرازلینوکس — فهرست نویسندگان مطالب و راهنماها.')
+@section('title', 'نویسندگان و مترجمان')
+@section('meta_description', 'کسانی که در نگارش و ترجمه مطالب شیرازلینوکس دست داشته‌اند — مقالات، راهنماها و برگردان‌های نرم‌افزار آزاد.')
+@section('canonical', route('authors.index'))
 @push('seo')
 @if(setting('seo_jsonld_enabled', true))
 @php
@@ -37,16 +38,23 @@
       ['name' => 'نویسندگان', 'url' => route('authors.index')],
     ]])
     <section class="hero">
-        <h1>نویسندگان</h1>
-        <p class="muted">افرادی که در تولید محتوای جامعه نقش داشته‌اند.</p>
+        <h1>نویسندگان و مترجمان</h1>
+        <p class="muted">کسانی که در نگارش یا ترجمه مطالب جامعه دست داشته‌اند.</p>
     </section>
-    <ul class="list-plain">
+    <div class="crew-grid author-grid">
         @foreach($authors as $author)
-            <li>
-                <a href="{{ route('authors.show', $author->slug) }}"><strong>{{ $author->name }}</strong></a>
-                <span class="card-meta"> — {{ $author->posts_count }} مطلب</span>
-            </li>
+            <article class="crew-card">
+              <a class="crew-card-link" href="{{ route('authors.show', $author->slug) }}">
+                @if($author->avatarUrl())
+                  <img class="crew-card-photo" src="{{ $author->avatarUrl() }}" alt="{{ $author->name }}" width="96" height="96" loading="lazy">
+                @else
+                  <div class="crew-card-photo crew-card-photo--empty" aria-hidden="true">{{ mb_substr($author->name, 0, 1) }}</div>
+                @endif
+                <h2 class="crew-card-name">{{ $author->name }}</h2>
+                <p class="crew-card-role">{{ $author->posts_count }} مطلب@if($author->contributions_count) · {{ $author->contributions_count }} مشارکت@endif</p>
+              </a>
+            </article>
         @endforeach
-    </ul>
+    </div>
 </div>
 @endsection
