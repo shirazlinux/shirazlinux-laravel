@@ -63,8 +63,9 @@
     <article class="article fedi-page">
         <h1>{{ $pageTitle }}</h1>
         <figure class="article-cover">
-            <img src="{{ asset('media/posts/fediverse/cover.jpg') }}" alt="شبکه‌ای از دایره‌های رنگی آدم‌ها که به هم وصل‌اند و برجی سنگی که فرو می‌ریزد"
+            <img src="{{ asset('media/posts/fediverse/cover.jpg') }}" alt="ماموت ماستادون و نمادهای نرم‌افزارهای فدیورس روی شاخه درختی کنار رودخانه"
                  width="1200" height="630" decoding="async" fetchpriority="high">
+            <figcaption><em>تصویر کاور: <a href="https://commons.wikimedia.org/wiki/File:My_Neighbor_Mastodon_(and_Fediverse).jpg" target="_blank" rel="noopener">My Neighbor Mastodon (and Fediverse)</a>، اثر <a href="https://www.davidrevoy.com/article1043/my-neighbor-mastodon-and-fediverse" target="_blank" rel="noopener">David Revoy</a>، <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a>، برش داده شده</em></figcaption>
         </figure>
         <div class="article-body prose">
             <p>شبکه‌های اجتماعی بزرگ مال یک شرکت‌اند. همان شرکت تصمیم می‌گیرد چه ببینید، چه چیزی پنهان شود و داده‌هایتان کجا برود. فدیورس (Fediverse) راه دیگری است. شبکه‌ای از هزاران سرور مستقل که با هم حرف می‌زنند و هیچ‌کس مالک کل آن نیست.</p>
